@@ -1,0 +1,640 @@
+[
+  {
+    "questionText": "My sister often goes to ...... church by ...... bus.",
+    "options": [
+      "Ø - Ø",
+      "a - the",
+      "the - a",
+      "the - the"
+    ],
+    "correctAnswer": 0,
+    "level": "easy"
+  },
+  {
+    "questionText": "Mel's mother is in ...... hospital, so we went to visit her last night.",
+    "options": [
+      "a",
+      "Ø",
+      "the",
+      "an"
+    ],
+    "correctAnswer": 1,
+    "level": "easy"
+  },
+  {
+    "questionText": "Do you know ...... man who is waiting for the bus over there?",
+    "options": [
+      "a",
+      "an",
+      "the",
+      "Ø"
+    ],
+    "correctAnswer": 2,
+    "level": "easy"
+  },
+  {
+    "questionText": "My ...... car is four years old, and it still runs well.",
+    "options": [
+      "a",
+      "Ø",
+      "an",
+      "the"
+    ],
+    "correctAnswer": 1,
+    "level": "easy"
+  },
+  {
+    "questionText": "We went by ...... train to the west of England.",
+    "options": [
+      "a",
+      "an",
+      "the",
+      "Ø"
+    ],
+    "correctAnswer": 3,
+    "level": "easy"
+  },
+  {
+    "questionText": "I __________ to school every day.",
+    "options": [
+      "go",
+      "goes",
+      "went",
+      "going"
+    ],
+    "correctAnswer": 0,
+    "level": "easy"
+  },
+  {
+    "questionText": "She __________ to eat vegetables.",
+    "options": [
+      "not like",
+      "doesn't like",
+      "not liked",
+      "doesn't liked"
+    ],
+    "correctAnswer": 1,
+    "level": "easy"
+  },
+  {
+    "questionText": "We __________ TV every night.",
+    "options": [
+      "watches",
+      "watching",
+      "watched",
+      "watch"
+    ],
+    "correctAnswer": 3,
+    "level": "easy"
+  },
+  {
+    "questionText": "You __________ ice cream!",
+    "options": [
+      "loving",
+      "are love",
+      "love",
+      "loves"
+    ],
+    "correctAnswer": 2,
+    "level": "easy"
+  },
+  {
+    "questionText": "He __________ at a restaurant on weekends.",
+    "options": [
+      "work",
+      "is working",
+      "worked",
+      "works"
+    ],
+    "correctAnswer": 3,
+    "level": "easy"
+  },
+  {
+    "questionText": "Some teachers ____________ much homework.",
+    "options": [
+      "give",
+      "gives",
+      "are give",
+      "is give"
+    ],
+    "correctAnswer": 0,
+    "level": "easy"
+  },
+  {
+    "questionText": "Taylor and Adam __________ good friends.",
+    "options": [
+      "be",
+      "is",
+      "are",
+      "does"
+    ],
+    "correctAnswer": 2,
+    "level": "easy"
+  },
+  {
+    "questionText": "_______ your parents let you go to bed late?",
+    "options": [
+      "Are",
+      "Does",
+      "Do",
+      "Is"
+    ],
+    "correctAnswer": 2,
+    "level": "easy"
+  },
+  {
+    "questionText": "How many books __________ you read in a year?",
+    "options": [
+      "are",
+      "were",
+      "did",
+      "do"
+    ],
+    "correctAnswer": 3,
+    "level": "easy"
+  },
+  {
+    "questionText": "He is good at football but he _____ want to play now.",
+    "options": [
+      "isn\u2019t",
+      "wasn\u2019t",
+      "doesn\u2019t",
+      "don\u2019t"
+    ],
+    "correctAnswer": 2,
+    "level": "easy"
+  },
+  {
+    "questionText": "He is talking for hours but I _______ understand anything.",
+    "options": [
+      "don\u2019t",
+      "wasn\u2019t",
+      "isn\u2019t",
+      "am not"
+    ],
+    "correctAnswer": 0,
+    "level": "easy"
+  },
+  {
+    "questionText": "How often ______ you go to the cinema?",
+    "options": [
+      "are",
+      "do",
+      "was",
+      "does"
+    ],
+    "correctAnswer": 1,
+    "level": "easy"
+  },
+  {
+    "questionText": "She ______ like playing tennis. So she _____ plays tennis.",
+    "options": [
+      "doesn\u2019t / always",
+      "doesn\u2019t / never",
+      "isn\u2019t / never",
+      "isn\u2019t / hardly ever"
+    ],
+    "correctAnswer": 1,
+    "level": "easy"
+  },
+  {
+    "questionText": "One of my friend ________ reads newspaper.",
+    "options": [
+      "doesn\u2019t",
+      "does",
+      "never",
+      "isn\u2019t"
+    ],
+    "correctAnswer": 2,
+    "level": "easy"
+  },
+  {
+    "questionText": "How many students ________ English?",
+    "options": [
+      "knows",
+      "are knowing",
+      "does know",
+      "know"
+    ],
+    "correctAnswer": 3,
+    "level": "easy"
+  },
+  {
+    "questionText": "Peter never feels lonely. He has got _________ friends.",
+    "options": [
+      "much",
+      "so much",
+      "many",
+      "a great deal of"
+    ],
+    "correctAnswer": 2,
+    "level": "normal"
+  },
+  {
+    "questionText": "Mr Johnson lived with his three _______ in the countryside",
+    "options": [
+      "child",
+      "childs",
+      "children",
+      "childrens"
+    ],
+    "correctAnswer": 2,
+    "level": "normal"
+  },
+  {
+    "questionText": "My mother needs _____ milk to make a cake.",
+    "options": [
+      "a",
+      "some",
+      "any",
+      "many"
+    ],
+    "correctAnswer": 1,
+    "level": "normal"
+  },
+  {
+    "questionText": "I\u2019d like to buy _________",
+    "options": [
+      "a shoes",
+      "a pair of shoes",
+      "the number of shoes",
+      "a shoe"
+    ],
+    "correctAnswer": 1,
+    "level": "normal"
+  },
+  {
+    "questionText": "There are not _____ in that classroom.",
+    "options": [
+      "any student",
+      "a lot of student",
+      "a great deal of students",
+      "many students"
+    ],
+    "correctAnswer": 3,
+    "level": "normal"
+  },
+  {
+    "questionText": "A prize ___ every year.",
+    "options": [
+      "award",
+      "awards",
+      "is awarded",
+      "are awarded"
+    ],
+    "correctAnswer": 2,
+    "level": "normal"
+  },
+  {
+    "questionText": "Everybody ___ by the news.",
+    "options": [
+      "shocked",
+      "was shocked",
+      "were shocked",
+      "had shocked"
+    ],
+    "correctAnswer": 1,
+    "level": "normal"
+  },
+  {
+    "questionText": "If we __________ the window yesterday, it __________ so cold in here.",
+    "options": [
+      "had closed / would not have been",
+      "closed / were not",
+      "have closed / had not been",
+      "closed / had not been"
+    ],
+    "correctAnswer": 0,
+    "level": "normal"
+  },
+  {
+    "questionText": "If the lady __________ the boy, he _________ into the van.",
+    "options": [
+      "have not stopped / could have ran",
+      "had not stopped / would have run",
+      "has not stopped / has run",
+      "had not stopped / could have ran"
+    ],
+    "correctAnswer": 1,
+    "level": "normal"
+  },
+  {
+    "questionText": "If you ____________ down the volume of your stereo, the neighbours would not have complained.",
+    "options": [
+      "turned",
+      "\u2019d turned",
+      "have turned",
+      "would not have turn"
+    ],
+    "correctAnswer": 1,
+    "level": "normal"
+  },
+  {
+    "questionText": "My boss said that she ________ there at noon.",
+    "options": [
+      "is going to be",
+      "was going to be",
+      "will be",
+      "can be"
+    ],
+    "correctAnswer": 1,
+    "level": "normal"
+  },
+  {
+    "questionText": "They asked me when _________.",
+    "options": [
+      "did I arrive",
+      "will I arrive",
+      "I had arrived",
+      "I can arrive"
+    ],
+    "correctAnswer": 0,
+    "level": "normal"
+  },
+  {
+    "questionText": "The teacher told us that Columbus ________ America in 1492.",
+    "options": [
+      "discovered",
+      "had discovered",
+      "was discovering",
+      "would discover"
+    ],
+    "correctAnswer": 1,
+    "level": "normal"
+  },
+  {
+    "questionText": "Liam told me that he _____ his best in the exam the _____ day.",
+    "options": [
+      "had done / following",
+      "will do / previous",
+      "would do/ following",
+      "was going / previous"
+    ],
+    "correctAnswer": 2,
+    "level": "normal"
+  },
+  {
+    "questionText": "The mother asked her son _______.",
+    "options": [
+      "where he has been",
+      "where he had been",
+      "where has he been",
+      "where had he been"
+    ],
+    "correctAnswer": 3,
+    "level": "normal"
+  },
+  {
+    "questionText": "The more you practice, ___________ you will become.",
+    "options": [
+      "the skillful",
+      "the more skillful",
+      "skillfuler",
+      "the most skillful"
+    ],
+    "correctAnswer": 1,
+    "level": "normal"
+  },
+  {
+    "questionText": "___________ you study, ___________ you will understand the subject.",
+    "options": [
+      "The hard / the well",
+      "The harder / the well",
+      "The harder / the more well",
+      "The hardest / the best"
+    ],
+    "correctAnswer": 1,
+    "level": "normal"
+  },
+  {
+    "questionText": "The ___________ you exercise, ___________ you will feel.",
+    "options": [
+      "more / the good",
+      "most / the better",
+      "more / the better",
+      "gooder / the best"
+    ],
+    "correctAnswer": 2,
+    "level": "normal"
+  },
+  {
+    "questionText": "Ann, __________ for the safety of her child, ran to stop him playing with the electric socket.",
+    "options": [
+      "concerned",
+      "concerning",
+      "to concern",
+      "to be concerned"
+    ],
+    "correctAnswer": 0,
+    "level": "normal"
+  },
+  {
+    "questionText": "The police are searching the area __________ the boy was last seen.",
+    "options": [
+      "which",
+      "where",
+      "that",
+      "how"
+    ],
+    "correctAnswer": 1,
+    "level": "normal"
+  },
+  {
+    "questionText": "The findings of the report are highly ___ and deserve further investigation.",
+    "options": [
+      "questionable",
+      "significant",
+      "trivial",
+      "temporary"
+    ],
+    "correctAnswer": 1,
+    "level": "hard"
+  },
+  {
+    "questionText": "Which sentence is correct?",
+    "options": [
+      "Never I have seen such a performance.",
+      "Never have I seen such a performance.",
+      "I have never seen such a performance never.",
+      "Never seen I such a performance."
+    ],
+    "correctAnswer": 1,
+    "level": "hard"
+  },
+  {
+    "questionText": "What does \u201cmitigate\u201d mean in an academic context?",
+    "options": [
+      "To support",
+      "To measure",
+      "To reduce the severity of something",
+      "To exaggerate"
+    ],
+    "correctAnswer": 2,
+    "level": "hard"
+  },
+  {
+    "questionText": "Choose the correct sentence:",
+    "options": [
+      " If she studies more, she would have passed.",
+      "If she studied more, she will pass.",
+      "If she had studied more, she would be more confident now.",
+      "If she studies more, she passes."
+    ],
+    "correctAnswer": 2,
+    "level": "hard"
+  },
+  {
+    "questionText": "The study failed to ___ a direct connection between stress and heart disease.",
+    "options": [
+      "manage",
+      "establish",
+      "recognize",
+      "approach"
+    ],
+    "correctAnswer": 1,
+    "level": "hard"
+  },
+  {
+    "questionText": "Which of these is a strong collocation?",
+    "options": [
+      "Strong rain",
+      "Heavy rain",
+      "Big rain",
+      "Serious rain"
+    ],
+    "correctAnswer": 1,
+    "level": "hard"
+  },
+  {
+    "questionText": "Identify the correct sentence:",
+    "options": [
+      "It is important that he goes to the meeting.",
+      "It is important that he go to the meeting.",
+      "It is important that he gone to the meeting.",
+      "It is important that he went to the meeting."
+    ],
+    "correctAnswer": 0,
+    "level": "hard"
+  },
+  {
+    "questionText": "What is the best synonym for \u201cplummet\u201d?",
+    "options": [
+      "Drop suddenly",
+      "Rise gradually",
+      "Remain steady",
+      "Improve slightly"
+    ],
+    "correctAnswer": 1,
+    "level": "hard"
+  },
+  {
+    "questionText": "The roads were icy; ___, several accidents occurred.",
+    "options": [
+      "furthermore",
+      "in contrast",
+      "as a result",
+      "for example"
+    ],
+    "correctAnswer": 2,
+    "level": "hard"
+  },
+  {
+    "questionText": "He was praised for his ___ approach to solving the problem.",
+    "options": [
+      "passive",
+      "lazy",
+      "proactive",
+      "disinterested"
+    ],
+    "correctAnswer": 2,
+    "level": "hard"
+  },
+  {
+    "questionText": "What does the phrasal verb \u201cfollow through (on something)\u201d mean?",
+    "options": [
+      "To begin a task",
+      "To cancel plans",
+      "To complete something that has been planned or promised",
+      "To misunderstand instructions"
+    ],
+    "correctAnswer": 2,
+    "level": "hard"
+  },
+  {
+    "questionText": "He\u2019s studying to become ___ engineer at ___ university in the UK.",
+    "options": [
+      "an / a",
+      "an / a",
+      "a / an",
+      "a / the"
+    ],
+    "correctAnswer": 1,
+    "level": "hard"
+  },
+  {
+    "questionText": "The teacher asked the student to ___ the essay in more depth.",
+    "options": [
+      "look for",
+      "elaborate on",
+      "come up",
+      "talk out"
+    ],
+    "correctAnswer": 1,
+    "level": "hard"
+  },
+  {
+    "questionText": "Choose the best phrase to describe a chart trend:",
+    "options": [
+      "There is a quick jump.",
+      "There is a nice rise.",
+      "There is a sharp increase.",
+      "There is a cool growth."
+    ],
+    "correctAnswer": 2,
+    "level": "hard"
+  },
+  {
+    "questionText": "Choose the sentence with correct word form:",
+    "options": [
+      "The government introduced a new regulate system.",
+      "The government introduced a new regulatory system.",
+      "The government introduced a new regulation systematize.",
+      "The government introduce a regulation system."
+    ],
+    "correctAnswer": 1,
+    "level": "hard"
+  },
+  {
+    "questionText": "The experiment will be conducted under ___ conditions.",
+    "options": [
+      "natural",
+      "soft",
+      "controlled",
+      "mild"
+    ],
+    "correctAnswer": 2,
+    "level": "hard"
+  },
+  {
+    "questionText": "Choose the correct sentence:",
+    "options": [
+      "By the time we arrive, they will finish the presentation.",
+      "By the time we arrive, they will have finished the presentation.",
+      "By the time we arrived, they will finish the presentation.",
+      "By the time we arrive, they finish the presentation."
+    ],
+    "correctAnswer": 1,
+    "level": "hard"
+  },
+  {
+    "questionText": "The proposal was well-written. ___, it lacked originality.",
+    "options": [
+      "Therefore",
+      "However",
+      "As a result",
+      "Namely"
+    ],
+    "correctAnswer": 1,
+    "level": "hard"
+  }
+]

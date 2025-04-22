@@ -1,0 +1,18 @@
+[
+  {
+    "_id": { "$oid": "660000000000000000000001" },
+    "username": "nguyenvana",
+    "email": "nguyenvana@example.com",
+    "passwordHash": "hashed_password_1",
+    "level": "easy",
+    "high_score": 90
+  },
+  {
+    "_id": { "$oid": "660000000000000000000002" },
+    "username": "tranthib",
+    "email": "tranthib@example.com",
+    "passwordHash": "hashed_password_2",
+    "level": "medium",
+    "high_score": 85
+  }
+]
