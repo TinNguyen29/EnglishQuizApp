@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class QuizService {
-  static const String baseUrl = 'http://192.168.1.104:3000/api/questions';
+  static const String baseUrl = 'http://10.106.19.89:3000/api/questions';
 
   /// Lấy danh sách câu hỏi theo level (easy, normal, hard)
   static Future<List<Map<String, dynamic>>> fetchQuestions(String level) async {

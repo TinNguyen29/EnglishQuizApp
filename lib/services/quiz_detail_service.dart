@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class QuizDetailService {
-  static const String baseUrl = 'http://192.168.1.104:3000/api/quiz_details';
+  static const String baseUrl = 'http://10.106.19.89:3000/api/quiz_details';
 
   static Future<bool> submitQuizDetail({
     required String email,

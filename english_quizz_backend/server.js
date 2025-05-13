@@ -1,6 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const router = express.Router();
+const scoreController = require('./controllers/scoreController');
 require('dotenv').config();
 
 // Khởi tạo app từ express
@@ -31,6 +33,8 @@ app.use(express.json()); // Cho phép đọc dữ liệu JSON từ client
 app.get('/', (req, res) => {
   res.send('Backend đang hoạt động!');
 });
+
+router.post('/', scoreController.saveScore);
 
 // Các routes chính
 app.use('/api', authRoutes);               

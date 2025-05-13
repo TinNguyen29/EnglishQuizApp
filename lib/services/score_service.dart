@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ScoreService {
-  static const String baseUrl = 'http://192.168.1.104:3000/api/score'; // Đổi IP nếu cần
+  static const String baseUrl = 'http://10.106.19.89:3000/api/score'; // Đổi IP nếu backend khác
 
-  // Lưu điểm người dùng vào server
+  // ✅ Gọi API: Lưu điểm
   static Future<void> saveScore({
     required String email,
     required int score,
@@ -21,18 +21,18 @@ class ScoreService {
         }),
       );
 
-      // Kiểm tra mã trạng thái của phản hồi
       if (response.statusCode == 201) {
-        print("Điểm đã được lưu thành công!");
+        print("✅ Điểm đã được lưu thành công!");
       } else {
-        throw Exception('Lỗi khi lưu điểm: ${response.statusCode} - ${response.body}');
+        throw Exception('❌ Lỗi khi lưu điểm: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
-      // Xử lý lỗi nếu có sự cố với việc kết nối hoặc yêu cầu
-      print("Lỗi khi gửi yêu cầu lưu điểm: $e");
+      print("❌ Lỗi khi gửi yêu cầu lưu điểm: $e");
       throw Exception("Lỗi khi gửi yêu cầu lưu điểm: $e");
     }
   }
+
+  // ✅ Gọi API: Lưu chi tiết quiz
   static Future<void> saveQuizDetails({
     required String email,
     required String level,
@@ -63,5 +63,22 @@ class ScoreService {
     }
   }
 
+  // ✅ Gọi API: Lấy bảng xếp hạng
+  static Future<List<Map<String, dynamic>>> getRanking() async {
+    final url = Uri.parse('$baseUrl/ranking');
 
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.cast<Map<String, dynamic>>();
+      } else {
+        throw Exception('Không thể lấy bảng xếp hạng: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Lỗi kết nối khi lấy ranking: $e');
+      rethrow;
+    }
+  }
 }

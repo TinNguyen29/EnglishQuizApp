@@ -1,4 +1,4 @@
-const User = require('../models/User');
+const User = require('../models/user');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -34,7 +34,7 @@ exports.login = async (req, res) => {
       id: user._id,
       username: user.username,
       email: user.email,
-      role: user.role
+      role: user.role || 'user', // mặc định là 'user' nếu không có role
     }
   });
 };

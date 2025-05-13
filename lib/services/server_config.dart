@@ -1,7 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ServerConfig {
-  static const String baseUrl = 'http://192.168.1.104:3000/api';
+  static const String baseUrl = 'http://10.106.19.89:3000/api';
   static const String _tokenKey = 'jwt_token';
 
   /// Lưu token vào SharedPreferences

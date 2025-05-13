@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/quiz_service.dart';
 import '../services/score_service.dart';
+import '../services/auth_service.dart';
+
 
 class QuizScreen extends StatefulWidget {
   final String level;
@@ -29,12 +31,12 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is String) {
-      email = args;
-    } else if (args is Map && args.containsKey('email')) {
-      email = args['email'];
-    }
+
+    AuthService.getEmail().then((value) {
+      setState(() {
+        email = value;
+      });
+    });
 
     remainingSeconds = widget.timeLimitSeconds;
     _questionsFuture = QuizService.fetchQuestions(widget.level);

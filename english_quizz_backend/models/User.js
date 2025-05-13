@@ -1,11 +1,10 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true },
-  email:    { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  role:     { type: String, enum: ['user', 'admin'], default: 'user' }
+  username: String,
+  email: String,
+  password: String,
+  isAdmin: Boolean
 });
 
-module.exports = mongoose.model('User', userSchema);
-// Compare this snippet from controllers/authController.js:
+module.exports = mongoose.models.User || mongoose.model('User', userSchema);

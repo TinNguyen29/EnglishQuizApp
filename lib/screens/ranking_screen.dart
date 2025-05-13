@@ -12,19 +12,40 @@ class RankingScreen extends StatefulWidget {
   _RankingScreenState createState() => _RankingScreenState();
 }
 
-class _RankingScreenState extends State<RankingScreen> {
+class _RankingScreenState extends State<RankingScreen> with SingleTickerProviderStateMixin {
+
+  late TabController _tabController;
   List<Map<String, dynamic>> rankings = [];
   String errorMessage = "";
+  final List<String> modes = ['easy', 'normal', 'hard'];
+  String selectedMode = 'easy';
 
   @override
   void initState() {
     super.initState();
-    _loadRankings();
+    _tabController = TabController(length: modes.length, vsync: this);
+    _loadRankings(selectedMode);
+
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) {
+        String mode = modes[_tabController.index];
+        _loadRankings(mode);
+        setState(() {
+          selectedMode = mode;
+        });
+      }
+    });
   }
 
-  Future<void> _loadRankings() async {
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadRankings(String mode) async {
     try {
-      List<Map<String, dynamic>> fetchedRankings = await RankingService.fetchRankings();
+      List<Map<String, dynamic>> fetchedRankings = await RankingService.fetchRankings(mode);
       setState(() {
         rankings = fetchedRankings;
         errorMessage = "";
@@ -43,20 +64,23 @@ class _RankingScreenState extends State<RankingScreen> {
       appBar: AppBar(
         title: const Text('Xếp Hạng'),
         centerTitle: true,
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: modes.map((mode) => Tab(text: mode.toUpperCase())).toList(),
+        ),
       ),
       body: errorMessage.isNotEmpty
           ? Center(child: Text(errorMessage, style: TextStyle(color: Colors.red)))
           : rankings.isEmpty
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: Text("Chưa có danh sách xếp hạng"))
           : ListView.builder(
         itemCount: rankings.length,
         itemBuilder: (context, index) {
+          final user = rankings[index];
           return ListTile(
-            leading: CircleAvatar(
-              child: Text(rankings[index]['rank'].toString()),
-            ),
-            title: Text(rankings[index]['username']),
-            subtitle: Text('Điểm: ${rankings[index]['score']}'),
+            leading: CircleAvatar(child: Text('${index + 1}')),
+            title: Text(user['username']),
+            subtitle: Text('Điểm: ${user['score']}'),
           );
         },
       ),
