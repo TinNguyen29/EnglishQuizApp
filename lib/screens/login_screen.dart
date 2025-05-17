@@ -11,8 +11,9 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final emailCtrl = TextEditingController();
-  final passCtrl = TextEditingController();
+  final TextEditingController emailCtrl = TextEditingController();
+  final TextEditingController passCtrl = TextEditingController();
+
   bool isLoading = false;
   String errorMessage = '';
   bool _obscureText = true;
@@ -33,43 +34,49 @@ class _LoginScreenState extends State<LoginScreen> {
       errorMessage = '';
     });
 
-    try {
-      final res = await AuthService.login(email, password);
+    final res = await AuthService.login(email, password);
 
-      if (res['success'] == true) {
-        final role = res['user']['role'];
-        final username = res['user']['username'];
-        final email = res['user']['email'];
-        final token = res['token'];
+    setState(() {
+      isLoading = false;
+    });
 
-        await AuthService.saveUserInfo(username, email, role, token);
+    if (res['success'] == true) {
+      final user = res['user'];
+      final username = user['username'];
+      final email = user['email'];
+      final role = user['role']?.toString().trim().toLowerCase();
 
-        // Điều hướng theo vai trò
+      print('👉 ROLE nhận được từ backend: "$role"');
+
+      if (username != null && email != null) {
         if (role == 'admin') {
+          print('👉 Điều hướng đến AdminDashboard');
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const AdminDashboard()),
           );
         } else {
+          print('👉 Điều hướng đến HomeScreen (user thường)');
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => HomeScreen(email: email, username: username)),
+            MaterialPageRoute(
+              builder: (context) => HomeScreen(
+                email: email,
+                username: username,
+              ),
+            ),
           );
         }
       } else {
         setState(() {
-          errorMessage = res['message'] ?? 'Đăng nhập thất bại.';
+          errorMessage = 'Thông tin người dùng không hợp lệ.';
         });
       }
-    } catch (e) {
+    } else {
       setState(() {
-        errorMessage = 'Lỗi hệ thống: ${e.toString()}';
+        errorMessage = res['message'] ?? 'Đăng nhập thất bại';
       });
     }
-
-    setState(() {
-      isLoading = false;
-    });
   }
 
   Widget _buildInput({
@@ -85,12 +92,14 @@ class _LoginScreenState extends State<LoginScreen> {
         prefixIcon: Icon(isPassword ? Icons.lock : Icons.email),
         suffixIcon: isPassword
             ? IconButton(
-          icon: Icon(_obscureText ? Icons.visibility_off : Icons.visibility),
+          icon: Icon(
+              _obscureText ? Icons.visibility_off : Icons.visibility),
           onPressed: () => setState(() => _obscureText = !_obscureText),
         )
             : null,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        contentPadding:
+        const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
       ),
     );
   }
@@ -107,7 +116,10 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const Text(
                 'Đăng nhập',
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.teal),
+                style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.teal),
               ),
               const SizedBox(height: 12),
               const Text(
@@ -127,11 +139,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: isLoading ? null : login,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.teal,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   child: isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Đăng nhập', style: TextStyle(fontSize: 16, color: Colors.white)),
+                      : const Text('Đăng nhập',
+                      style:
+                      TextStyle(fontSize: 16, color: Colors.white)),
                 ),
               ),
               const SizedBox(height: 16),

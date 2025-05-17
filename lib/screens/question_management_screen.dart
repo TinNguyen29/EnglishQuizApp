@@ -1,3 +1,4 @@
+// Thêm thư viện showDialog
 import 'package:flutter/material.dart';
 import '../services/quiz_service.dart';
 import '../models/question_model.dart';
@@ -24,7 +25,6 @@ class _QuestionManagementScreenState extends State<QuestionManagementScreen> {
     _loadQuestions();
   }
 
-  // Tải câu hỏi từ API
   Future<void> _loadQuestions() async {
     setState(() => _isLoading = true);
     try {
@@ -36,13 +36,12 @@ class _QuestionManagementScreenState extends State<QuestionManagementScreen> {
     } catch (e) {
       print(e);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('❌ Lỗi khi tải câu hỏi')),
+        const SnackBar(content: Text('❌ Lỗi khi tải câu hỏi')),
       );
       setState(() => _isLoading = false);
     }
   }
 
-  // Mở dialog để thêm hoặc sửa câu hỏi
   void _openDialog({Question? question}) {
     bool isEdit = question != null;
     if (isEdit) {
@@ -88,13 +87,13 @@ class _QuestionManagementScreenState extends State<QuestionManagementScreen> {
 
               if (content.isEmpty || options.any((e) => e.isEmpty) || correctAnswer == null || correctAnswer < 0 || correctAnswer > 3) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('❗ Vui lòng nhập đầy đủ và chính xác')),
+                  const SnackBar(content: Text('❗ Vui lòng nhập đầy đủ và chính xác')),
                 );
                 return;
               }
 
               final newQuestion = Question(
-                id: isEdit ? question!.id : '', // Chỉ lấy id khi là sửa câu hỏi
+                id: isEdit ? question!.id : '',
                 content: content,
                 options: options,
                 correctAnswer: correctAnswer,
@@ -108,7 +107,7 @@ class _QuestionManagementScreenState extends State<QuestionManagementScreen> {
               }
 
               Navigator.pop(context);
-              _loadQuestions(); // Load lại danh sách câu hỏi
+              _loadQuestions();
             },
             child: const Text('Lưu'),
           ),
@@ -117,10 +116,48 @@ class _QuestionManagementScreenState extends State<QuestionManagementScreen> {
     );
   }
 
-  // Xóa câu hỏi
-  void _deleteQuestion(String id) async {
-    await QuizService.deleteQuestion(id);
-    _loadQuestions(); // Tải lại câu hỏi sau khi xóa
+  // Hiển thị xác nhận trước khi xóa
+  void _confirmDelete(String id) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Xác nhận xóa'),
+        content: const Text('Bạn có chắc muốn xóa câu hỏi này không?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy')),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await QuizService.deleteQuestion(id);
+              _loadQuestions();
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Xóa'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Hiển thị xác nhận trước khi sửa
+  void _confirmEdit(Question question) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Xác nhận sửa'),
+        content: const Text('Bạn có chắc muốn sửa câu hỏi này không?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy')),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _openDialog(question: question);
+            },
+            child: const Text('Sửa'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -138,7 +175,7 @@ class _QuestionManagementScreenState extends State<QuestionManagementScreen> {
             onChanged: (value) {
               setState(() {
                 _selectedLevel = value!;
-                _loadQuestions(); // Reload questions when level changes
+                _loadQuestions();
               });
             },
           ),
@@ -167,7 +204,6 @@ class _QuestionManagementScreenState extends State<QuestionManagementScreen> {
               itemCount: _questions.length,
               itemBuilder: (context, index) {
                 final q = _questions[index];
-                print('>> Câu hỏi ${index + 1}: ${q.content}');
                 return Card(
                   margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   child: Padding(
@@ -175,17 +211,11 @@ class _QuestionManagementScreenState extends State<QuestionManagementScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Hiển thị câu hỏi với dấu ngoặc kép xung quanh
                         Text(
                           'Câu ${index + 1}: ${q.content}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                         ),
-
                         const SizedBox(height: 8),
-                        // Hiển thị các đáp án
                         for (int i = 0; i < q.options.length; i++)
                           Text(
                             '${i + 1}. ${q.options[i]}',
@@ -200,19 +230,17 @@ class _QuestionManagementScreenState extends State<QuestionManagementScreen> {
                           children: [
                             Text(
                               'Đáp án đúng: ${q.correctAnswer + 1}',
-                              style: const TextStyle(
-                                fontStyle: FontStyle.italic,
-                              ),
+                              style: const TextStyle(fontStyle: FontStyle.italic),
                             ),
                             Row(
                               children: [
                                 IconButton(
                                   icon: const Icon(Icons.edit, color: Colors.orange),
-                                  onPressed: () => _openDialog(question: q),
+                                  onPressed: () => _confirmEdit(q),
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () => _deleteQuestion(q.id),
+                                  onPressed: () => _confirmDelete(q.id),
                                 ),
                               ],
                             ),
@@ -227,7 +255,6 @@ class _QuestionManagementScreenState extends State<QuestionManagementScreen> {
           ),
         ],
       ),
-
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openDialog(),
         child: const Icon(Icons.add),

@@ -26,7 +26,7 @@ class HomeScreen extends StatelessWidget {
           level: level,
           timeLimitSeconds: timeLimitSeconds,
         ),
-        settings: RouteSettings(arguments: email),
+        settings: RouteSettings(arguments: email), // Truyền email qua settings
       ),
     );
   }
@@ -82,7 +82,7 @@ class HomeScreen extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.logout, color: Colors.redAccent),
                     onPressed: () => logout(context),
-                  )
+                  ),
                 ],
               ),
 
@@ -97,6 +97,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
+              // Quizzes
               _buildQuizCard(
                 context,
                 title: 'Trình độ Dễ',

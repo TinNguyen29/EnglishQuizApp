@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const User = require('./models/user');
 const bcrypt = require('bcrypt');
-require('dotenv').config(); // đọc .env
+require('dotenv').config(); 
 
 async function createDefaultAdmin() {
   await mongoose.connect(process.env.MONGO_URI, {
@@ -18,6 +18,7 @@ async function createDefaultAdmin() {
       email: 'admin@example.com',
       password: hashedPassword,
       isAdmin: true,
+      role: 'admin',
     });
     await admin.save();
     console.log("✅ Tạo tài khoản admin mặc định thành công!");
@@ -25,7 +26,7 @@ async function createDefaultAdmin() {
     console.log("⚠️ Tài khoản admin đã tồn tại.");
   }
 
-  await mongoose.disconnect(); // đóng kết nối sau khi chạy
+  await mongoose.disconnect(); 
 }
 
 createDefaultAdmin();

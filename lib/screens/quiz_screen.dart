@@ -1,22 +1,23 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:retry/retry.dart';
+import 'package:uuid/uuid.dart'; // Thêm package uuid
 import '../services/quiz_service.dart';
 import '../services/score_service.dart';
 import '../services/auth_service.dart';
-
 
 class QuizScreen extends StatefulWidget {
   final String level;
   final int timeLimitSeconds;
 
   const QuizScreen({
-    super.key,
+    Key? key,
     required this.level,
     required this.timeLimitSeconds,
-  });
+  }) : super(key: key);
 
   @override
-  State<QuizScreen> createState() => _QuizScreenState();
+  _QuizScreenState createState() => _QuizScreenState();
 }
 
 class _QuizScreenState extends State<QuizScreen> {
@@ -27,20 +28,36 @@ class _QuizScreenState extends State<QuizScreen> {
   int remainingSeconds = 0;
   int currentIndex = 0;
   String? email;
+  String? userId;
+  bool isSubmitting = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    AuthService.getEmail().then((value) {
-      setState(() {
-        email = value;
+    // Lấy email và userId từ AuthService
+    AuthService.getEmail().then((emailValue) {
+      AuthService.getUserId().then((userIdValue) {
+        setState(() {
+          email = emailValue;
+          userId = userIdValue;
+        });
       });
     });
 
     remainingSeconds = widget.timeLimitSeconds;
-    _questionsFuture = QuizService.fetchQuestions(widget.level);
+    _questionsFuture = _fetchQuestionsWithValidation();
     _startTimer();
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchQuestionsWithValidation() async {
+    final questions = await QuizService.fetchQuestions(widget.level);
+    for (var q in questions) {
+      if (q['_id'] == null || q['questionText'] == null || q['options'] == null || q['correctAnswer'] == null) {
+        throw Exception('Định dạng câu hỏi không hợp lệ: $q');
+      }
+    }
+    return questions;
   }
 
   void _startTimer() {
@@ -61,10 +78,17 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Future<void> _submitQuiz({bool auto = false}) async {
+    if (isSubmitting) return;
+
+    setState(() {
+      isSubmitting = true;
+    });
+
     timer?.cancel();
     int score = 0;
     List<Map<String, dynamic>> answerDetails = [];
 
+    // Tính điểm và tạo answerDetails
     for (int i = 0; i < questions.length; i++) {
       int? selectedIndex = userAnswers[i];
       int correctIndex = questions[i]['correctAnswer'];
@@ -74,58 +98,122 @@ class _QuizScreenState extends State<QuizScreen> {
 
       answerDetails.add({
         "questionId": questions[i]['_id'],
-        "questionText": questions[i]['questionText'],
-        "selectedIndex": selectedIndex,
-        "correctIndex": correctIndex,
         "selectedAnswer": selectedIndex != null ? questions[i]['options'][selectedIndex] : null,
-        "correctAnswer": questions[i]['options'][correctIndex],
+        "timeTaken": 0, // Có thể thêm logic tính thời gian trả lời
         "isCorrect": isCorrect,
       });
     }
 
     final totalPoints = score * 1;
 
-    if (email != null) {
-      try {
-        await ScoreService.saveScore(
-          email: email!,
-          score: totalPoints,
-          level: widget.level,
+    // Validate trước khi gửi
+    if (userId == null || userId!.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Vui lòng đăng nhập để gửi bài làm.')),
         );
-        await ScoreService.saveQuizDetails(
-          email: email!,
-          level: widget.level,
-          score: totalPoints,
-          totalQuestions: questions.length,
-          answers: answerDetails,
-        );
-      } catch (e) {
-        print("❌ Lỗi khi lưu dữ liệu quiz: $e");
       }
+      setState(() {
+        isSubmitting = false;
+      });
+      return;
     }
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        title: const Text("🎉 Kết quả bài làm"),
-        content: Text(
-          "✅ Số câu đúng: $score/${questions.length}\n"
-              "✅ Mỗi câu đúng: 1 điểm\n"
-              "⭐ Tổng điểm: $totalPoints điểm${auto ? "\n⏱ Hết thời gian!" : ""}",
-          style: const TextStyle(fontSize: 16),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            child: const Text("Đóng"),
+    if (!['easy', 'normal', 'hard'].contains(widget.level.toLowerCase())) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Mức độ không hợp lệ: ${widget.level}')),
+        );
+      }
+      setState(() {
+        isSubmitting = false;
+      });
+      return;
+    }
+
+    if (answerDetails.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Chưa có câu trả lời nào được chọn.')),
+        );
+      }
+      setState(() {
+        isSubmitting = false;
+      });
+      return;
+    }
+
+    // Tạo quizId
+    final quizId = Uuid().v4();
+
+    // Gửi dữ liệu
+    try {
+      // Lưu điểm
+      if (email != null) {
+        await retry(
+              () => ScoreService.saveScore(
+            email: email!,
+            score: totalPoints,
+            level: widget.level,
           ),
-        ],
-      ),
-    );
+          maxAttempts: 3,
+          delayFactor: Duration(seconds: 1),
+          onRetry: (e) => print('Thử lại lưu điểm: $e'),
+        );
+      }
+
+      // Lưu chi tiết quiz
+      await retry(
+            () => ScoreService.saveQuizDetails(
+          userId: userId!,
+          quizId: quizId,
+          level: widget.level,
+          answers: answerDetails,
+        ),
+        maxAttempts: 3,
+        delayFactor: Duration(seconds: 1),
+        onRetry: (e) => print('Thử lại lưu chi tiết quiz: $e'),
+      );
+
+      // Hiển thị kết quả
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => AlertDialog(
+            title: const Text("🎉 Kết quả bài làm"),
+            content: Text(
+              "✅ Số câu đúng: $score/${questions.length}\n"
+                  "✅ Mỗi câu đúng: 1 điểm\n"
+                  "⭐ Tổng điểm: $totalPoints điểm${auto ? "\n⏱ Hết thời gian!" : ""}",
+              style: const TextStyle(fontSize: 16),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                child: const Text("Đóng"),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      print("❌ Lỗi khi lưu dữ liệu quiz: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi khi lưu bài làm: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSubmitting = false;
+        });
+      }
+    }
   }
 
   @override
@@ -197,54 +285,33 @@ class _QuizScreenState extends State<QuizScreen> {
                     color: isSelected ? Colors.deepPurple.shade100 : Colors.white,
                     elevation: 1,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    child: RadioListTile<int>(
-                      value: index,
-                      groupValue: userAnswers[currentIndex],
-                      onChanged: (value) {
+                    child: ListTile(
+                      title: Text(text),
+                      onTap: () {
                         setState(() {
-                          userAnswers[currentIndex] = value!;
+                          userAnswers[currentIndex] = index;
                         });
                       },
-                      title: Text(text),
-                      activeColor: Colors.deepPurple,
                     ),
                   );
                 }).toList(),
                 const Spacer(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: currentIndex > 0 ? () => setState(() => currentIndex--) : null,
-                      icon: const Icon(Icons.arrow_back),
-                      label: const Text("Quay lại"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey.shade400,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      ),
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: userAnswers[currentIndex] != null
-                          ? () {
-                        if (currentIndex < questions.length - 1) {
-                          setState(() => currentIndex++);
-                        } else {
-                          _submitQuiz();
-                        }
-                      }
-                          : null,
-                      icon: Icon(currentIndex < questions.length - 1
-                          ? Icons.arrow_forward
-                          : Icons.check),
-                      label: Text(currentIndex < questions.length - 1 ? "Tiếp theo" : "Nộp bài"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.deepPurple,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      ),
-                    ),
-                  ],
+                ElevatedButton(
+                  onPressed: isSubmitting ? null : () {
+                    if (currentIndex < questions.length - 1) {
+                      setState(() {
+                        currentIndex++;
+                      });
+                    } else {
+                      _submitQuiz();
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 50),
+                    backgroundColor: Colors.deepPurple,
+                    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  child: Text(currentIndex < questions.length - 1 ? "Tiếp theo" : "Nộp bài"),
                 ),
               ],
             ),

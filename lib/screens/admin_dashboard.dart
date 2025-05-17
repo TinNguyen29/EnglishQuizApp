@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'question_management_screen.dart'; // Import màn hình quản lý câu hỏi
+import 'question_management_screen.dart';
+import 'ranking_screen.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
@@ -12,17 +13,21 @@ class AdminDashboard extends StatelessWidget {
           MaterialPageRoute(builder: (_) => const QuestionManagementScreen()),
         );
         break;
-      case 'Quản lý người dùng':
-      case 'Quản lý điểm':
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Đi tới: $routeName')),
+      case 'Xem xếp hạng':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const RankingScreen(
+              email: 'admin@gmail.com',
+              username: 'admin',
+            ),
+          ),
         );
         break;
     }
   }
 
   void _logout(BuildContext context) {
-    // Xử lý đăng xuất và điều hướng về màn hình đăng nhập
     Navigator.pushReplacementNamed(context, '/login');
   }
 
@@ -30,70 +35,38 @@ class AdminDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Trang quản lý Admin'),
+        title: const Text('Trang quản trị'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {
-              // Thực hiện hành động thông báo
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Thông báo mới!')),
-              );
-            },
-          ),
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              // Tạo tính năng tìm kiếm
-              showSearch(context: context, delegate: CustomSearchDelegate());
+              showSearch(
+                context: context,
+                delegate: CustomSearchDelegate(navigateTo: _navigateTo),
+              );
             },
           ),
         ],
       ),
       drawer: Drawer(
-        child: Column(
+        child: ListView(
+          padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.blue),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: Colors.white,
-                    child: Icon(Icons.person, size: 40, color: Colors.blue),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    'Admin',
-                    style: TextStyle(color: Colors.white, fontSize: 18),
-                  ),
-                  Text(
-                    'admin@domain.com',
-                    style: TextStyle(color: Colors.white, fontSize: 14),
-                  ),
-                ],
+            const UserAccountsDrawerHeader(
+              decoration: BoxDecoration(color: Colors.teal),
+              accountName: Text('Admin', style: TextStyle(fontWeight: FontWeight.bold)),
+              accountEmail: Text('admin@gmail.com'),
+              currentAccountPicture: CircleAvatar(
+                backgroundColor: Colors.white,
+                child: Icon(Icons.admin_panel_settings, size: 40, color: Colors.teal),
               ),
             ),
-            _buildDrawerItem(
-              context,
-              icon: Icons.person,
-              title: 'Quản lý người dùng',
-            ),
-            _buildDrawerItem(
-              context,
-              icon: Icons.question_answer,
-              title: 'Quản lý câu hỏi',
-            ),
-            _buildDrawerItem(
-              context,
-              icon: Icons.bar_chart,
-              title: 'Quản lý điểm',
-            ),
+            _buildDrawerItem(context, icon: Icons.question_answer, title: 'Quản lý câu hỏi'),
+            _buildDrawerItem(context, icon: Icons.leaderboard, title: 'Xem xếp hạng'),
             const Divider(),
             ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Đăng xuất'),
+              leading: const Icon(Icons.logout, color: Colors.redAccent),
+              title: const Text('Đăng xuất', style: TextStyle(color: Colors.redAccent)),
               onTap: () => _logout(context),
             ),
           ],
@@ -108,27 +81,15 @@ class AdminDashboard extends StatelessWidget {
           children: [
             _buildDashboardCard(
               context,
-              icon: Icons.person,
-              title: 'Quản lý người dùng',
-              color: Colors.blue,
-            ),
-            _buildDashboardCard(
-              context,
               icon: Icons.question_answer,
               title: 'Quản lý câu hỏi',
-              color: Colors.green,
+              color: Colors.teal,
             ),
             _buildDashboardCard(
               context,
-              icon: Icons.bar_chart,
-              title: 'Quản lý điểm',
-              color: Colors.orange,
-            ),
-            _buildDashboardCard(
-              context,
-              icon: Icons.settings,
-              title: 'Cài đặt',
-              color: Colors.red,
+              icon: Icons.leaderboard,
+              title: 'Xem xếp hạng',
+              color: Colors.deepOrange,
             ),
           ],
         ),
@@ -144,7 +105,11 @@ class AdminDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildDashboardCard(BuildContext context, {required IconData icon, required String title, required Color color}) {
+  Widget _buildDashboardCard(BuildContext context, {
+    required IconData icon,
+    required String title,
+    required Color color,
+  }) {
     return GestureDetector(
       onTap: () => _navigateTo(context, title),
       child: Card(
@@ -155,7 +120,7 @@ class AdminDashboard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 50, color: Colors.white),
+              Icon(icon, size: 48, color: Colors.white),
               const SizedBox(height: 10),
               Text(
                 title,
@@ -171,14 +136,16 @@ class AdminDashboard extends StatelessWidget {
 }
 
 class CustomSearchDelegate extends SearchDelegate<dynamic> {
+  final void Function(BuildContext, String) navigateTo;
+
+  CustomSearchDelegate({required this.navigateTo});
+
   @override
   List<Widget> buildActions(BuildContext context) {
     return [
       IconButton(
         icon: const Icon(Icons.clear),
-        onPressed: () {
-          query = ''; // Xóa truy vấn tìm kiếm
-        },
+        onPressed: () => query = '',
       ),
     ];
   }
@@ -187,43 +154,34 @@ class CustomSearchDelegate extends SearchDelegate<dynamic> {
   Widget buildLeading(BuildContext context) {
     return IconButton(
       icon: const Icon(Icons.arrow_back),
-      onPressed: () {
-        close(context, null); // Đóng khi bấm quay lại
-      },
+      onPressed: () => close(context, null),
     );
   }
 
   @override
   Widget buildResults(BuildContext context) {
-    return Center(child: Text('Kết quả tìm kiếm cho "$query"'));
+    navigateTo(context, query);
+    close(context, null);
+    return Container(); // Không cần UI kết quả
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    return ListView(
-      children: [
-        ListTile(
-          title: const Text('Quản lý người dùng'),
+    final suggestions = ['Quản lý câu hỏi', 'Xem xếp hạng']
+        .where((item) => item.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+
+    return ListView.builder(
+      itemCount: suggestions.length,
+      itemBuilder: (_, index) {
+        return ListTile(
+          title: Text(suggestions[index]),
           onTap: () {
-            query = 'Quản lý người dùng';
+            query = suggestions[index];
             showResults(context);
           },
-        ),
-        ListTile(
-          title: const Text('Quản lý câu hỏi'),
-          onTap: () {
-            query = 'Quản lý câu hỏi';
-            showResults(context);
-          },
-        ),
-        ListTile(
-          title: const Text('Quản lý điểm'),
-          onTap: () {
-            query = 'Quản lý điểm';
-            showResults(context);
-          },
-        ),
-      ],
+        );
+      },
     );
   }
 }

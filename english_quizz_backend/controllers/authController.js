@@ -34,8 +34,28 @@ exports.login = async (req, res) => {
       id: user._id,
       username: user.username,
       email: user.email,
-      role: user.role || 'user', // mặc định là 'user' nếu không có role
+      role: (user.role || 'user').toString().trim().toLowerCase(), 
     }
   });
+};
+
+exports.resetPassword = async (req, res) => {
+  const { email, newPassword } = req.body;
+  try {
+    if (!email || !newPassword || newPassword.length < 8) {
+      return res.status(400).json({ message: 'Dữ liệu không hợp lệ: Email hoặc mật khẩu không đủ dài' });
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+    res.status(200).json({ success: true, message: 'Đặt lại mật khẩu thành công' });
+  } catch (err) {
+    console.error('Lỗi reset password:', err);
+    res.status(500).json({ message: 'Lỗi server: ' + err.message });
+  }
 };
 
