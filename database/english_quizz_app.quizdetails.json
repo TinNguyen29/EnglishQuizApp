@@ -1,0 +1,233 @@
+[{
+  "_id": {
+    "$oid": "6819c50231c074126056f2c3"
+  },
+  "userId": {
+    "$oid": "68061f08b47ca1b66a5bfe76"
+  },
+  "quizId": "1746519289428",
+  "questionId": {
+    "$oid": "67fe7b80012beb93f10066b8"
+  },
+  "answer": "a",
+  "timeTaken": 1,
+  "level": "easy",
+  "isCorrect": false,
+  "questionText": "Mel's mother is in ...... hospital, so we went to visit her last night.",
+  "options": [
+    "a",
+    "Ø",
+    "the",
+    "an"
+  ],
+  "correctAnswer": "Ø",
+  "createdAt": {
+    "$date": "2025-05-06T08:14:58.828Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6819c50231c074126056f2c6"
+  },
+  "userId": {
+    "$oid": "68061f08b47ca1b66a5bfe76"
+  },
+  "quizId": "1746519289428",
+  "questionId": {
+    "$oid": "68089398a6a9604ba3113c9b"
+  },
+  "answer": "Eight",
+  "timeTaken": 1,
+  "level": "easy",
+  "isCorrect": false,
+  "questionText": "How many days are there in a week?",
+  "options": [
+    "Five",
+    "Six",
+    "Seven",
+    "Eight"
+  ],
+  "correctAnswer": "Seven",
+  "createdAt": {
+    "$date": "2025-05-06T08:14:58.856Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6819c51c31c074126056f2d0"
+  },
+  "userId": {
+    "$oid": "68061f08b47ca1b66a5bfe76"
+  },
+  "quizId": "1746519314959",
+  "questionId": {
+    "$oid": "67fe7b80012beb93f10066b8"
+  },
+  "answer": "an",
+  "timeTaken": 4,
+  "level": "easy",
+  "isCorrect": false,
+  "questionText": "Mel's mother is in ...... hospital, so we went to visit her last night.",
+  "options": [
+    "a",
+    "Ø",
+    "the",
+    "an"
+  ],
+  "correctAnswer": "Ø",
+  "createdAt": {
+    "$date": "2025-05-06T08:15:24.831Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6819c70031c074126056f2db"
+  },
+  "userId": {
+    "$oid": "68061f08b47ca1b66a5bfe76"
+  },
+  "quizId": "1746519798579",
+  "questionId": {
+    "$oid": "68089398a6a9604ba3113c9b"
+  },
+  "answer": "Eight",
+  "timeTaken": 2,
+  "level": "easy",
+  "isCorrect": false,
+  "questionText": "How many days are there in a week?",
+  "options": [
+    "Five",
+    "Six",
+    "Seven",
+    "Eight"
+  ],
+  "correctAnswer": "Seven",
+  "createdAt": {
+    "$date": "2025-05-06T08:23:28.372Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6819c70031c074126056f2de"
+  },
+  "userId": {
+    "$oid": "68061f08b47ca1b66a5bfe76"
+  },
+  "quizId": "1746519798579",
+  "questionId": {
+    "$oid": "67fe7b80012beb93f10066b8"
+  },
+  "answer": "an",
+  "timeTaken": 1,
+  "level": "easy",
+  "isCorrect": false,
+  "questionText": "Mel's mother is in ...... hospital, so we went to visit her last night.",
+  "options": [
+    "a",
+    "Ø",
+    "the",
+    "an"
+  ],
+  "correctAnswer": "Ø",
+  "createdAt": {
+    "$date": "2025-05-06T08:23:28.401Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6819c7a831c074126056f2e5"
+  },
+  "userId": {
+    "$oid": "68061f08b47ca1b66a5bfe76"
+  },
+  "quizId": "1746519961843",
+  "questionId": {
+    "$oid": "67fe7b80012beb93f10066b8"
+  },
+  "answer": "the",
+  "timeTaken": 4,
+  "level": "easy",
+  "isCorrect": false,
+  "questionText": "Mel's mother is in ...... hospital, so we went to visit her last night.",
+  "options": [
+    "a",
+    "Ø",
+    "the",
+    "an"
+  ],
+  "correctAnswer": "Ø",
+  "createdAt": {
+    "$date": "2025-05-06T08:26:16.883Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6819c7a831c074126056f2e8"
+  },
+  "userId": {
+    "$oid": "68061f08b47ca1b66a5bfe76"
+  },
+  "quizId": "1746519961843",
+  "questionId": {
+    "$oid": "68089398a6a9604ba3113c9b"
+  },
+  "answer": "Seven",
+  "timeTaken": 5,
+  "level": "easy",
+  "isCorrect": true,
+  "questionText": "How many days are there in a week?",
+  "options": [
+    "Five",
+    "Six",
+    "Seven",
+    "Eight"
+  ],
+  "correctAnswer": "Seven",
+  "createdAt": {
+    "$date": "2025-05-06T08:26:16.913Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6823f4ac584a0c424317f1b5"
+  },
+  "userId": {
+    "$oid": "68061f08b47ca1b66a5bfe76"
+  },
+  "level": "hard",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6823f4b8584a0c424317f1b9"
+  },
+  "userId": {
+    "$oid": "68061f08b47ca1b66a5bfe76"
+  },
+  "quizId": "1747186860372",
+  "questionId": {
+    "$oid": "68089398a6a9604ba3113c9b"
+  },
+  "answer": "Eight",
+  "timeTaken": 1,
+  "level": "easy",
+  "isCorrect": false,
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6823f4b8584a0c424317f1bc"
+  },
+  "userId": {
+    "$oid": "68061f08b47ca1b66a5bfe76"
+  },
+  "level": "easy",
+  "__v": 0
+}]

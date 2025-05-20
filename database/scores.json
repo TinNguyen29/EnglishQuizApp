@@ -1,14 +1,93 @@
-[
-  {
-    "_id": { "$oid": "660000000000000000000201" },
-    "user_id": { "$oid": "660000000000000000000001" },
-    "score": 90,
-    "date": { "$date": "2024-04-02T10:00:00Z" }
+[{
+  "_id": {
+    "$oid": "67fe26037afdfd4b2f3571eb"
   },
-  {
-    "_id": { "$oid": "660000000000000000000202" },
-    "user_id": { "$oid": "660000000000000000000002" },
-    "score": 85,
-    "date": { "$date": "2024-04-02T12:00:00Z" }
+  "userId": {
+    "$oid": "67fe22007afdfd4b2f3571e1"
+  },
+  "level": "normal",
+  "score": 4,
+  "createdAt": {
+    "$date": "2025-04-15T09:25:23.835Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T09:25:23.835Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67fe26517afdfd4b2f3571f0"
+  },
+  "userId": {
+    "$oid": "67fe22007afdfd4b2f3571e1"
+  },
+  "level": "hard",
+  "score": 10,
+  "createdAt": {
+    "$date": "2025-04-15T09:26:41.893Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T09:26:41.893Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67fe29017afdfd4b2f3571f6"
+  },
+  "userId": {
+    "$oid": "67fe22007afdfd4b2f3571e1"
+  },
+  "level": "easy",
+  "score": 10,
+  "createdAt": {
+    "$date": "2025-04-15T09:38:09.992Z"
+  },
+  "updatedAt": {
+    "$date": "2025-04-15T09:38:09.992Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67ff08e894d4af7b3a3695fc"
+  },
+  "userId": {
+    "$oid": "67ff08a294d4af7b3a3695f4"
+  },
+  "score": 7,
+  "level": "easy",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "6819c23e31c074126056f2ba"
+  },
+  "userId": {
+    "$oid": "68061f08b47ca1b66a5bfe76"
+  },
+  "score": 0,
+  "level": "easy",
+  "createdAt": {
+    "$date": "2025-05-06T08:03:10.979Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68203da7b1c023feb2407914"
+  },
+  "level": "easy",
+  "userId": {
+    "$oid": "6806263bb47ca1b66a5bfe8a"
+  },
+  "__v": 0,
+  "highScore": 10,
+  "testId": {
+    "$oid": "68203d3a2c744bf5f0f3e828"
+  },
+  "updatedAt": {
+    "$date": "2025-05-11T06:03:19.048Z"
   }
-]
+}]

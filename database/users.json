@@ -1,18 +1,71 @@
-[
-  {
-    "_id": { "$oid": "660000000000000000000001" },
-    "username": "nguyenvana",
-    "email": "nguyenvana@example.com",
-    "passwordHash": "hashed_password_1",
-    "level": "easy",
-    "high_score": 90
+[{
+  "_id": {
+    "$oid": "68061f08b47ca1b66a5bfe76"
   },
-  {
-    "_id": { "$oid": "660000000000000000000002" },
-    "username": "tranthib",
-    "email": "tranthib@example.com",
-    "passwordHash": "hashed_password_2",
-    "level": "medium",
-    "high_score": 85
+  "username": "Pham Anh Tu",
+  "email": "anhtus@gmail.com",
+  "password": "$2b$10$8be87D2b.wrh1IS7WR2Hd.2yz39T84v.mdIG5T3LIm9yu.OwtUnvu",
+  "role": "user",
+  "__v": 0,
+  "createdAt": {
+    "$date": "2025-05-11T08:55:24.898Z"
+  },
+  "lastLogin": {
+    "$date": "2025-05-13T10:16:08.842Z"
   }
-]
+},
+{
+  "_id": {
+    "$oid": "682066a9d59307475d29d716"
+  },
+  "username": "Hoang Minh Huy",
+  "email": "minhhuy@gmail.com",
+  "password": "$2b$10$oMR.bYYsPqbW04TEI/0KnOwXxv8jEEsgDHQw8YHIMREId3CsvIl9e",
+  "role": "user",
+  "createdAt": {
+    "$date": "2025-05-11T08:58:17.305Z"
+  },
+  "__v": 0,
+  "lastLogin": {
+    "$date": "2025-05-11T08:58:27.293Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6822fc02e20d703e15713a6c"
+  },
+  "username": "Pho Quoc Phong",
+  "email": "phong@gmail.com",
+  "password": "$2b$10$dGKLxwcvIA0yn/UlCeia1.S.BoAkd2CcrOfdLJL9mKPxQjCKUMkDi",
+  "role": "user",
+  "createdAt": {
+    "$date": "2025-05-13T08:00:02.368Z"
+  },
+  "__v": 0,
+  "lastLogin": {
+    "$date": "2025-05-13T08:00:10.808Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "68231d198ea4b44bdbd2b0ec"
+  },
+  "username": "Hung Dat",
+  "email": "hungdat@gmail.com",
+  "password": "$2b$10$5FsaAiiMnRBYTYC2/VNj3.YusSpYGItJELrNKYOdzyxrM6lqb6Am2",
+  "role": "user",
+  "createdAt": {
+    "$date": "2025-05-13T10:21:13.602Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68286572b01904dbb9dccd25"
+  },
+  "username": "admin",
+  "email": "admin@gmail.com",
+  "password": "$2b$10$3HyVahvshjSPmeAiFQetAOargU3e2tqLYs78mTcEN9xFEo/IVj/9y",
+  "role": "admin",
+  "__v": 0
+}]
