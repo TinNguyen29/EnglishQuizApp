@@ -9,21 +9,11 @@ class ScoreService {
 
   /// Lưu điểm
   static Future<void> saveScore({
-    required String email,
+    required String userId,
     required int score,
-    required String level,
     required String mode,
+    required int duration,
   }) async {
-    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)) {
-      throw Exception('Email không hợp lệ');
-    }
-    if (score < 0) {
-      throw Exception('Điểm không được âm');
-    }
-    if (!['easy', 'normal', 'hard'].contains(level.toLowerCase())) {
-      throw Exception('Mức độ không hợp lệ');
-    }
-
     final baseUrl = await getBaseUrl();
     final Uri url = Uri.parse('$baseUrl/api/score');
     final token = await AuthService.getToken();
@@ -41,36 +31,25 @@ class ScoreService {
             'Authorization': 'Bearer $token',
           },
           body: jsonEncode({
-            'email': email,
+            'userId': userId,
             'score': score,
-            'level': level,
             'mode': mode,
+            'duration': duration,
           }),
-        ).timeout(Duration(seconds: 10)),
+        ).timeout(const Duration(seconds: 10)),
         maxAttempts: 3,
-        delayFactor: Duration(seconds: 1),
       );
 
-      print('Save Score URL: $url');
-      print('Status code: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      print('📤 Save Score body: ${jsonEncode({
+        'userId': userId,
+        'score': score,
+        'mode': mode,
+        'duration': duration,
+      })}');
 
-      if (response.statusCode == 401) {
-        throw Exception('Không được phép: Vui lòng đăng nhập lại.');
-      }
-
-      if (response.statusCode == 404) {
-        throw Exception('Không tìm thấy endpoint. Vui lòng kiểm tra URL.');
-      }
-
-      if (response.headers['content-type']?.contains('application/json') != true) {
-        throw Exception('Phản hồi không phải JSON.');
-      }
-
-      if (response.statusCode == 201) {
-        print('✅ Điểm đã được lưu thành công!');
-      } else {
-        throw Exception('❌ Lỗi khi lưu điểm: ${response.statusCode} - ${response.body}');
+      print('Save Score response: ${response.body}');
+      if (response.statusCode != 201) {
+        throw Exception('❌ Lỗi khi lưu điểm: ${response.body}');
       }
     } catch (e) {
       print('❌ Lỗi khi gửi yêu cầu lưu điểm: $e');

@@ -118,11 +118,11 @@ class _QuizScreenState extends State<QuizScreen> {
       if (email != null) {
         await retry(
               () => ScoreService.saveScore(
-            email: email!,
-            score: totalPoints,
-            level: widget.level,
-            mode: widget.level.toLowerCase(),
-          ),
+                userId: userId!,
+                score: totalPoints,
+                mode: widget.level.toLowerCase(),
+                duration: widget.timeLimitSeconds - remainingSeconds, // ⏱ thời gian làm bài
+              ),
           maxAttempts: 3,
           delayFactor: Duration(seconds: 1),
         );

@@ -80,7 +80,7 @@ class _RankingScreenState extends State<RankingScreen> with SingleTickerProvider
           return ListTile(
             leading: CircleAvatar(child: Text('${index + 1}')),
             title: Text(user['username']),
-            subtitle: Text('Điểm: ${user['score']}'),
+            subtitle: Text('Điểm: ${user['maxScore']} | Thời gian: ${user['bestDuration']} giây'),
           );
         },
       ),

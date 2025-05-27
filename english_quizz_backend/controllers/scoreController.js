@@ -4,24 +4,24 @@ const User = require('../models/user'); // phải import User
 // ✅ Ghi điểm có gắn user_id từ email
 exports.saveScore = async (req, res) => {
   try {
-    const { email, score, level, mode } = req.body;
+    const { userId, score, mode, duration } = req.body;
 
-    // Tìm user theo email
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    if (!userId || score == null || !mode || duration == null) {
+      return res.status(400).json({ message: 'Thiếu dữ liệu bắt buộc' });
+    }
 
-    // Tạo điểm mới với user_id
     const newScore = new Score({
-      user_id: user._id,
+      user_id: userId,
       score,
       mode,
+      duration,
       date: new Date()
     });
 
     await newScore.save();
-    res.status(201).json(newScore);
+    res.status(201).json({ message: '✅ Đã lưu điểm thành công', data: newScore });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: '❌ Lỗi khi lưu điểm: ' + err.message });
   }
 };
 
@@ -56,17 +56,25 @@ exports.getRankingByMode = async (req, res) => {
           _id: '$user_id',
           username: { $first: '$userInfo.username' },
           email: { $first: '$userInfo.email' },
-          maxScore: { $max: '$score' }
+          maxScore: { $max: '$score' },
+          bestDuration: { $min: '$duration' } // thời gian ngắn nhất trong các lần đạt điểm cao
         }
       },
-      { $sort: { maxScore: -1 } },
+      {
+        $sort: {
+          maxScore: -1,           // điểm cao nhất trước
+          bestDuration: 1         // thời gian làm bài ngắn hơn sẽ đứng trước nếu bằng điểm
+        }
+      },
       { $limit: 10 }
     ]);
 
+    console.log("🎯 TOP SCORES:", topScores);
     res.json(topScores);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
   }
 };
+
 
