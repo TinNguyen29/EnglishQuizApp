@@ -85,10 +85,22 @@ class _QuizScreenState extends State<QuizScreen> {
     });
 
     timer?.cancel();
+
+    // ✅ Kiểm tra người dùng đã trả lời hết chưa
+    if (userAnswers.length < questions.length) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Vui lòng trả lời tất cả các câu hỏi trước khi nộp.')),
+        );
+      }
+      setState(() => isSubmitting = false);
+      return;
+    }
+
     int score = 0;
     List<Map<String, dynamic>> answerDetails = [];
 
-    // Tính điểm và tạo answerDetails
+    // ✅ Tính điểm và tạo answerDetails
     for (int i = 0; i < questions.length; i++) {
       int? selectedIndex = userAnswers[i];
       int correctIndex = questions[i]['correctAnswer'];
@@ -96,17 +108,25 @@ class _QuizScreenState extends State<QuizScreen> {
 
       if (isCorrect) score++;
 
-      answerDetails.add({
-        "questionId": questions[i]['_id'],
-        "selectedAnswer": selectedIndex != null ? questions[i]['options'][selectedIndex] : null,
-        "timeTaken": 0, // Có thể thêm logic tính thời gian trả lời
-        "isCorrect": isCorrect,
-      });
+      if (selectedIndex != null) {
+        answerDetails.add({
+          "questionId": questions[i]['_id'],
+          "selectedAnswer": questions[i]['options'][selectedIndex],
+          "timeTaken": 0,
+          "isCorrect": isCorrect,
+        });
+      }
     }
 
     final totalPoints = score * 1;
 
-    // Validate trước khi gửi
+    // ✅ In log để kiểm tra answerDetails
+    print('📝 DANH SÁCH TRẢ LỜI GỬI LÊN SERVER:');
+    for (var a in answerDetails) {
+      print('📌 QuestionId: ${a['questionId']} | Answer: ${a['selectedAnswer']} | Đúng?: ${a['isCorrect']}');
+    }
+
+    // ✅ Kiểm tra thông tin người dùng
     if (userId == null || userId!.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -143,18 +163,18 @@ class _QuizScreenState extends State<QuizScreen> {
       return;
     }
 
-    // Tạo quizId
+    // ✅ Tạo quizId
     final quizId = Uuid().v4();
 
-    // Gửi dữ liệu
     try {
-      // Lưu điểm
+      // ✅ Gửi điểm
       if (email != null) {
         await retry(
               () => ScoreService.saveScore(
             email: email!,
             score: totalPoints,
             level: widget.level,
+            mode: widget.level.toLowerCase(),
           ),
           maxAttempts: 3,
           delayFactor: Duration(seconds: 1),
@@ -162,7 +182,7 @@ class _QuizScreenState extends State<QuizScreen> {
         );
       }
 
-      // Lưu chi tiết quiz
+      // ✅ Gửi chi tiết quiz
       await retry(
             () => ScoreService.saveQuizDetails(
           userId: userId!,
@@ -175,7 +195,7 @@ class _QuizScreenState extends State<QuizScreen> {
         onRetry: (e) => print('Thử lại lưu chi tiết quiz: $e'),
       );
 
-      // Hiển thị kết quả
+      // ✅ Hiển thị kết quả
       if (mounted) {
         showDialog(
           context: context,
@@ -215,6 +235,7 @@ class _QuizScreenState extends State<QuizScreen> {
       }
     }
   }
+
 
   @override
   void dispose() {
@@ -264,6 +285,42 @@ class _QuizScreenState extends State<QuizScreen> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
+                // ✅ Thanh trạng thái câu hỏi
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: List.generate(questions.length, (index) {
+                      final isAnswered = userAnswers.containsKey(index);
+                      final isCurrent = index == currentIndex;
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              currentIndex = index;
+                            });
+                          },
+                          child: CircleAvatar(
+                            radius: 14,
+                            backgroundColor: isCurrent
+                                ? Colors.orange
+                                : isAnswered
+                                ? Colors.green
+                                : Colors.grey,
+                            child: Text(
+                              '${index + 1}',
+                              style: const TextStyle(color: Colors.white, fontSize: 12),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // ✅ Câu hỏi
                 Card(
                   elevation: 3,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -276,6 +333,8 @@ class _QuizScreenState extends State<QuizScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
+
+                // ✅ Các lựa chọn
                 ...options.asMap().entries.map((entry) {
                   final index = entry.key;
                   final text = entry.value;
@@ -295,23 +354,46 @@ class _QuizScreenState extends State<QuizScreen> {
                     ),
                   );
                 }).toList(),
+
                 const Spacer(),
-                ElevatedButton(
-                  onPressed: isSubmitting ? null : () {
-                    if (currentIndex < questions.length - 1) {
-                      setState(() {
-                        currentIndex++;
-                      });
-                    } else {
-                      _submitQuiz();
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 50),
-                    backgroundColor: Colors.deepPurple,
-                    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  child: Text(currentIndex < questions.length - 1 ? "Tiếp theo" : "Nộp bài"),
+
+                // ✅ Nút Quay lại & Tiếp theo/Nộp bài
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: isSubmitting || currentIndex == 0 ? null : () {
+                          setState(() {
+                            currentIndex--;
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey,
+                          minimumSize: const Size(double.infinity, 50),
+                        ),
+                        child: const Text("Quay lại"),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: isSubmitting ? null : () {
+                          if (currentIndex < questions.length - 1) {
+                            setState(() {
+                              currentIndex++;
+                            });
+                          } else {
+                            _submitQuiz();
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurple,
+                          minimumSize: const Size(double.infinity, 50),
+                        ),
+                        child: Text(currentIndex < questions.length - 1 ? "Tiếp theo" : "Nộp bài"),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -320,4 +402,5 @@ class _QuizScreenState extends State<QuizScreen> {
       ),
     );
   }
+
 }

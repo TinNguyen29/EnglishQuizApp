@@ -2,12 +2,12 @@ const Question = require('../models/Question');
 
 // Tạo câu hỏi mới
 exports.createQuestion = async (req, res) => {
-  const { questionText, options, correctAnswer, level } = req.body;
+  const { content, options, correct_answer, level, image_url } = req.body;
 
   if (
-    !questionText || typeof questionText !== 'string' ||
+    !content || typeof content !== 'string' ||
     !Array.isArray(options) || options.length !== 4 || options.some(opt => typeof opt !== 'string') ||
-    typeof correctAnswer !== 'number' || correctAnswer < 0 || correctAnswer > 3 ||
+    typeof correct_answer !== 'number' || correct_answer < 0 || correct_answer > 3 ||
     !['easy', 'normal', 'hard'].includes(level)
   ) {
     return res.status(400).json({ message: '❗ Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.' });
@@ -15,17 +15,20 @@ exports.createQuestion = async (req, res) => {
 
   try {
     const newQuestion = new Question({
-      content: questionText,
+      content,
       options,
-      correct_answer: correctAnswer,
-      level
+      correct_answer,
+      level,
+      image_url: image_url || ''
     });
+
     await newQuestion.save();
     res.status(201).json(newQuestion);
   } catch (error) {
     res.status(500).json({ message: '❌ Lỗi khi lưu câu hỏi: ' + error.message });
   }
 };
+
 
 // Lấy tất cả câu hỏi (có thể lọc theo level)
 exports.getAllQuestions = async (req, res) => {
@@ -53,37 +56,40 @@ exports.getQuestionById = async (req, res) => {
 
 // Cập nhật câu hỏi
 exports.updateQuestion = async (req, res) => {
-  const { questionText, options, correctAnswer, level } = req.body;
-
-  if (
-    !questionText || typeof questionText !== 'string' ||
-    !Array.isArray(options) || options.length !== 4 || options.some(opt => typeof opt !== 'string') ||
-    typeof correctAnswer !== 'number' || correctAnswer < 0 || correctAnswer > 3 ||
-    !['easy', 'normal', 'hard'].includes(level)
-  ) {
-    return res.status(400).json({ message: '❗ Dữ liệu cập nhật không hợp lệ.' });
-  }
-
-  try {
-    const updated = await Question.findByIdAndUpdate(
-      req.params.id,
-      {
-        content: questionText,
-        options,
-        correct_answer: correctAnswer,
-        level
-      },
-      { new: true }
-    );
-
-    if (!updated) {
-      return res.status(404).json({ message: `❌ Không tìm thấy câu hỏi với ID: ${req.params.id}` });
+  exports.updateQuestion = async (req, res) => {
+    const { content, options, correct_answer, level, image_url } = req.body;
+  
+    if (
+      !content || typeof content !== 'string' ||
+      !Array.isArray(options) || options.length !== 4 || options.some(opt => typeof opt !== 'string') ||
+      typeof correct_answer !== 'number' || correct_answer < 0 || correct_answer > 3 ||
+      !['easy', 'normal', 'hard'].includes(level)
+    ) {
+      return res.status(400).json({ message: '❗ Dữ liệu cập nhật không hợp lệ.' });
     }
-
-    res.json(updated);
-  } catch (error) {
-    res.status(500).json({ message: '❌ Lỗi khi cập nhật câu hỏi: ' + error.message });
-  }
+  
+    try {
+      const updated = await Question.findByIdAndUpdate(
+        req.params.id,
+        {
+          content,
+          options,
+          correct_answer,
+          level,
+          image_url
+        },
+        { new: true }
+      );
+  
+      if (!updated) {
+        return res.status(404).json({ message: `❌ Không tìm thấy câu hỏi với ID: ${req.params.id}` });
+      }
+  
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ message: '❌ Lỗi khi cập nhật câu hỏi: ' + error.message });
+    }
+  };  
 };
 
 // Xóa câu hỏi

@@ -9,6 +9,7 @@ require('dotenv').config();
 const app = express();
 
 // Import các routes
+const uploadRoutes = require('./routes/upload');
 const authRoutes = require('./routes/auth');
 const questionRoutes = require('./routes/question');
 const scoreRoutes = require('./routes/score');
@@ -28,6 +29,7 @@ mongoose.connect(MONGO_URI, {
 // Middleware
 app.use(cors());
 app.use(express.json()); // Cho phép đọc dữ liệu JSON từ client
+app.use('/uploads', express.static('uploads'));
 
 // Kiểm tra server
 app.get('/', (req, res) => {
@@ -40,7 +42,8 @@ router.post('/', scoreController.saveScore);
 app.use('/api', authRoutes);               
 app.use('/api/questions', questionRoutes);  
 app.use('/api/score', scoreRoutes);         
-app.use("/api/quiz-details", quizDetailRoutes); 
+app.use("/api/quiz-details", quizDetailRoutes);
+app.use('/api', uploadRoutes);
 // Khởi chạy server
 app.listen(PORT, () => {
   console.log(`Server đang chạy tại: http://localhost:${PORT}`);

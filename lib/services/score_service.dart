@@ -12,6 +12,7 @@ class ScoreService {
     required String email,
     required int score,
     required String level,
+    required String mode,
   }) async {
     if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)) {
       throw Exception('Email không hợp lệ');
@@ -43,6 +44,7 @@ class ScoreService {
             'email': email,
             'score': score,
             'level': level,
+            'mode': mode,
           }),
         ).timeout(Duration(seconds: 10)),
         maxAttempts: 3,

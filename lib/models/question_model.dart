@@ -4,6 +4,7 @@ class Question {
   final List<String> options;
   final int correctAnswer;
   final String level;
+  final String? imageUrl;
 
   Question({
     required this.id,
@@ -11,15 +12,17 @@ class Question {
     required this.options,
     required this.correctAnswer,
     required this.level,
+    this.imageUrl,
   });
 
   factory Question.fromJson(Map<String, dynamic> json) {
     return Question(
       id: json['_id'] ?? '',
-      content: json['content'] ?? json['questionText'] ?? '', // <-- hỗ trợ cả 2 tên
+      content: json['content'] ?? json['questionText'] ?? '',
       options: List<String>.from(json['options'] ?? []),
-      correctAnswer: json['correctAnswer'] ?? 0,
+      correctAnswer: json['correct_answer'] ?? 0,
       level: json['level'] ?? 'easy',
+      imageUrl: json['image_url'],
     );
   }
 
@@ -27,8 +30,9 @@ class Question {
     return {
       'content': content,
       'options': options,
-      'correctAnswer': correctAnswer,
+      'correct_answer': correctAnswer,
       'level': level,
+      'image_url': imageUrl,
     };
   }
 }

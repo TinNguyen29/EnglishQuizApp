@@ -7,7 +7,7 @@ const quizDetailSchema = new mongoose.Schema({
   answer: String, // Ghi nhận đáp án người dùng chọn
   timeTaken: Number,
   highestScore: Number,
-  level: { type: String, enum: ['easy', 'medium', 'hard'], required: true },
+  level: { type: String, enum: ['easy', 'normal', 'hard']},
   isCorrect: { type: Boolean }  // Trường để kiểm tra đáp án đúng hay sai
 });
 

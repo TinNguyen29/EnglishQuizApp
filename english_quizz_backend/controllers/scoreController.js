@@ -4,7 +4,7 @@ const User = require('../models/user'); // phải import User
 // ✅ Ghi điểm có gắn user_id từ email
 exports.saveScore = async (req, res) => {
   try {
-    const { email, score, level } = req.body;
+    const { email, score, level, mode } = req.body;
 
     // Tìm user theo email
     const user = await User.findOne({ email });

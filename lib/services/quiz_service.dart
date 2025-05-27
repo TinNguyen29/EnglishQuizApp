@@ -68,7 +68,10 @@ class QuizService {
 
   /// Tạo câu hỏi mới
   static Future<void> createQuestion(Map<String, dynamic> data) async {
-    if (data['question'] == null || data['answers'] == null || data['correctAnswer'] == null || data['level'] == null) {
+    if (data['content'] == null ||
+        data['options'] == null ||
+        data['correct_answer'] == null ||
+        data['level'] == null) {
       throw Exception('Dữ liệu câu hỏi không hợp lệ: Thiếu các trường bắt buộc.');
     }
     if (!['easy', 'normal', 'hard'].contains(data['level'].toLowerCase())) {
@@ -84,6 +87,9 @@ class QuizService {
     }
 
     try {
+      print('Dữ liệu gửi lên backend:');
+      print(jsonEncode(data));
+
       final response = await retry(
             () => http.post(
           url,
@@ -128,7 +134,10 @@ class QuizService {
     if (id.isEmpty) {
       throw Exception('ID câu hỏi không hợp lệ');
     }
-    if (data['question'] == null || data['answers'] == null || data['correctAnswer'] == null || data['level'] == null) {
+    if (data['content'] == null ||
+        data['options'] == null ||
+        data['correct_answer'] == null ||
+        data['level'] == null) {
       throw Exception('Dữ liệu câu hỏi không hợp lệ: Thiếu các trường bắt buộc.');
     }
     if (!['easy', 'normal', 'hard'].contains(data['level'].toLowerCase())) {
