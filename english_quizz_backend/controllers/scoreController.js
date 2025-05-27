@@ -1,5 +1,5 @@
-const Score = require('../models/score');
-const User = require('../models/user'); // phải import User
+const Score = require("../models/score");
+const User = require("../models/user"); // phải import User
 
 // ✅ Ghi điểm có gắn user_id từ email
 exports.saveScore = async (req, res) => {
@@ -7,21 +7,23 @@ exports.saveScore = async (req, res) => {
     const { userId, score, mode, duration } = req.body;
 
     if (!userId || score == null || !mode || duration == null) {
-      return res.status(400).json({ message: 'Thiếu dữ liệu bắt buộc' });
+      return res.status(400).json({ message: "Thiếu dữ liệu bắt buộc" });
     }
 
-    const newScore = new Score({
-      user_id: userId,
-      score,
-      mode,
-      duration,
-      date: new Date()
-    });
+    const updatedScore = await Score.findOneAndUpdate(
+      { user_id: userId, mode }, // đúng field
+      { score, duration, date: new Date() },
+      { upsert: true, new: true }
+    );
 
-    await newScore.save();
-    res.status(201).json({ message: '✅ Đã lưu điểm thành công', data: newScore });
+    res
+      .status(201)
+      .json({
+        message: "✅ Đã lưu/cập nhật điểm thành công",
+        data: updatedScore,
+      });
   } catch (err) {
-    res.status(500).json({ error: '❌ Lỗi khi lưu điểm: ' + err.message });
+    res.status(500).json({ error: "❌ Lỗi khi lưu điểm: " + err.message });
   }
 };
 
@@ -44,29 +46,29 @@ exports.getRankingByMode = async (req, res) => {
       { $match: { mode } },
       {
         $lookup: {
-          from: 'users',
-          localField: 'user_id',
-          foreignField: '_id',
-          as: 'userInfo'
-        }
+          from: "users",
+          localField: "user_id",
+          foreignField: "_id",
+          as: "userInfo",
+        },
       },
-      { $unwind: '$userInfo' },
+      { $unwind: "$userInfo" },
       {
         $group: {
-          _id: '$user_id',
-          username: { $first: '$userInfo.username' },
-          email: { $first: '$userInfo.email' },
-          maxScore: { $max: '$score' },
-          bestDuration: { $min: '$duration' } // thời gian ngắn nhất trong các lần đạt điểm cao
-        }
+          _id: "$user_id",
+          username: { $first: "$userInfo.username" },
+          email: { $first: "$userInfo.email" },
+          maxScore: { $max: "$score" },
+          bestDuration: { $min: "$duration" }, // thời gian ngắn nhất trong các lần đạt điểm cao
+        },
       },
       {
         $sort: {
-          maxScore: -1,           // điểm cao nhất trước
-          bestDuration: 1         // thời gian làm bài ngắn hơn sẽ đứng trước nếu bằng điểm
-        }
+          maxScore: -1, // điểm cao nhất trước
+          bestDuration: 1, // thời gian làm bài ngắn hơn sẽ đứng trước nếu bằng điểm
+        },
       },
-      { $limit: 10 }
+      { $limit: 10 },
     ]);
 
     console.log("🎯 TOP SCORES:", topScores);
@@ -76,5 +78,3 @@ exports.getRankingByMode = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-

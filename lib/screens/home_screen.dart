@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'quiz_screen.dart';
 import 'ranking_screen.dart';
+import 'quiz_history_screen.dart';
 import '../services/auth_service.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -26,7 +27,7 @@ class HomeScreen extends StatelessWidget {
           level: level,
           timeLimitSeconds: timeLimitSeconds,
         ),
-        settings: RouteSettings(arguments: email), // Truyền email qua settings
+        settings: RouteSettings(arguments: email),
       ),
     );
   }
@@ -43,6 +44,15 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  void viewQuizHistory(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => QuizHistoryScreen(email: email),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -53,30 +63,27 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
+              // Header thông tin người dùng
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Xin chào,',
-                        style: TextStyle(fontSize: 16, color: Colors.black54),
-                      ),
-                      Text(
-                        username,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
+                      const Text('Xin chào,',
+                          style: TextStyle(fontSize: 16, color: Colors.black54)),
+                      Text(username,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          )),
                       const SizedBox(height: 4),
-                      Text(
-                        email,
-                        style: const TextStyle(fontSize: 13, color: Colors.black45),
-                      ),
+                      Text(email,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.black45,
+                          )),
                     ],
                   ),
                   IconButton(
@@ -97,7 +104,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // Quizzes
+              // Danh sách các cấp độ quiz
               _buildQuizCard(
                 context,
                 title: 'Trình độ Dễ',
@@ -129,41 +136,32 @@ class HomeScreen extends StatelessWidget {
               ),
 
               const SizedBox(height: 32),
+
+              // Xếp hạng
               const Text(
                 'Xếp hạng',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 12),
-              InkWell(
+              _buildMenuCard(
+                context,
+                title: 'Xem bảng xếp hạng người chơi',
+                icon: Icons.leaderboard,
+                iconColor: Colors.blue,
                 onTap: () => viewRankings(context),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.blue.withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.leaderboard, size: 28, color: Colors.blue),
-                      const SizedBox(width: 16),
-                      const Expanded(
-                        child: Text(
-                          'Xem bảng xếp hạng người chơi',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                        ),
-                      ),
-                      const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.black45),
-                    ],
-                  ),
-                ),
               ),
+
+              const SizedBox(height: 16),
+
+              // Lịch sử làm bài
+              _buildMenuCard(
+                context,
+                title: 'Xem lịch sử làm bài',
+                icon: Icons.history,
+                iconColor: Colors.purple,
+                onTap: () => viewQuizHistory(context),
+              ),
+
               const SizedBox(height: 30),
             ],
           ),
@@ -218,6 +216,45 @@ class HomeScreen extends StatelessWidget {
                   Text(description,
                       style: const TextStyle(fontSize: 14, color: Colors.black54)),
                 ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.black45),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuCard(
+      BuildContext context, {
+        required String title,
+        required IconData icon,
+        required Color iconColor,
+        required VoidCallback onTap,
+      }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: iconColor.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 28, color: iconColor),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
               ),
             ),
             const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.black45),

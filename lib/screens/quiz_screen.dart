@@ -2,9 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:retry/retry.dart';
 import 'package:uuid/uuid.dart';
+import '../services/auth_service.dart';
 import '../services/quiz_service.dart';
 import '../services/score_service.dart';
-import '../services/auth_service.dart';
+import 'review_screen.dart';
 
 class QuizScreen extends StatefulWidget {
   final String level;
@@ -17,64 +18,75 @@ class QuizScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _QuizScreenState createState() => _QuizScreenState();
+  State<QuizScreen> createState() => _QuizScreenState();
 }
 
 class _QuizScreenState extends State<QuizScreen> {
-  late Future<List<Map<String, dynamic>>> _questionsFuture;
   List<Map<String, dynamic>> questions = [];
   Map<int, int> userAnswers = {};
   Timer? timer;
   int remainingSeconds = 0;
   int currentIndex = 0;
-  String? email;
-  String? userId;
   bool isSubmitting = false;
 
+  String? email;
+  String? userId;
+
+  late Future<void> _initFuture;
+
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    AuthService.getEmail().then((emailValue) {
-      AuthService.getUserId().then((userIdValue) {
-        setState(() {
-          email = emailValue;
-          userId = userIdValue;
-        });
-      });
-    });
-    remainingSeconds = widget.timeLimitSeconds;
-    _questionsFuture = _fetchQuestionsWithValidation();
-    _startTimer();
+  void initState() {
+    super.initState();
+    _initFuture = _initialize();
   }
 
-  Future<List<Map<String, dynamic>>> _fetchQuestionsWithValidation() async {
-    final questions = await QuizService.fetchQuestions(widget.level);
-    for (var q in questions) {
-      if (q['_id'] == null ||
-          (q['questionText'] ?? q['content']) == null ||
-          q['options'] == null ||
-          (q['correctAnswer'] ?? q['correct_answer']) == null) {
-        throw Exception('Định dạng câu hỏi không hợp lệ: $q');
+  Future<void> _initialize() async {
+    email = await AuthService.getEmail();
+    userId = await AuthService.getUserId();
+
+    if (email == null || userId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Không thể xác thực người dùng. Vui lòng đăng nhập lại.")),
+        );
+        Navigator.pop(context);
+      }
+      return;
+    }
+
+    try {
+      final fetchedQuestions = await QuizService.fetchQuestions(widget.level);
+      for (var q in fetchedQuestions) {
+        if (q['_id'] == null || q['options'] == null || (q['questionText'] ?? q['content']) == null) {
+          throw Exception("Dữ liệu câu hỏi không hợp lệ.");
+        }
+      }
+      questions = fetchedQuestions;
+      remainingSeconds = widget.timeLimitSeconds;
+      _startTimer();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Lỗi tải câu hỏi: $e")));
+        Navigator.pop(context);
       }
     }
-    return questions;
   }
 
   void _startTimer() {
-    timer = Timer.periodic(const Duration(seconds: 1), (t) {
+    timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (remainingSeconds > 0) {
         setState(() => remainingSeconds--);
       } else {
-        timer?.cancel();
+        timer.cancel();
         _submitQuiz(auto: true);
       }
     });
   }
 
   String _formatTime(int seconds) {
-    final minutes = seconds ~/ 60;
-    final secs = seconds % 60;
-    return "${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}";
+    final m = (seconds ~/ 60).toString().padLeft(2, '0');
+    final s = (seconds % 60).toString().padLeft(2, '0');
+    return "$m:$s";
   }
 
   Future<void> _submitQuiz({bool auto = false}) async {
@@ -85,7 +97,7 @@ class _QuizScreenState extends State<QuizScreen> {
     if (userAnswers.length < questions.length) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Vui lòng trả lời tất cả các câu hỏi trước khi nộp.')),
+          const SnackBar(content: Text("Bạn cần trả lời tất cả câu hỏi.")),
         );
       }
       setState(() => isSubmitting = false);
@@ -96,37 +108,34 @@ class _QuizScreenState extends State<QuizScreen> {
     List<Map<String, dynamic>> answerDetails = [];
 
     for (int i = 0; i < questions.length; i++) {
-      int? selectedIndex = userAnswers[i];
-      int correctIndex = questions[i]['correctAnswer'] ?? questions[i]['correct_answer'];
-      bool isCorrect = selectedIndex == correctIndex;
+      final selected = userAnswers[i];
+      final correct = questions[i]['correctAnswer'] ?? questions[i]['correct_answer'];
+      final isCorrect = selected == correct;
       if (isCorrect) score++;
 
-      if (selectedIndex != null) {
-        answerDetails.add({
-          "questionId": questions[i]['_id'],
-          "selectedAnswer": questions[i]['options'][selectedIndex],
-          "timeTaken": 0,
-          "isCorrect": isCorrect,
-        });
-      }
+      answerDetails.add({
+        "questionId": questions[i]['_id'],
+        "selectedAnswer": selected != null ? questions[i]['options'][selected] : null,
+        "timeTaken": 0,
+        "isCorrect": isCorrect,
+      });
     }
 
-    final totalPoints = score * 1;
-    final quizId = Uuid().v4();
+    final totalPoints = score;
+    final quizId = const Uuid().v4();
+    final totalTime = widget.timeLimitSeconds - remainingSeconds;
 
     try {
-      if (email != null) {
-        await retry(
-              () => ScoreService.saveScore(
-                userId: userId!,
-                score: totalPoints,
-                mode: widget.level.toLowerCase(),
-                duration: widget.timeLimitSeconds - remainingSeconds, // ⏱ thời gian làm bài
-              ),
-          maxAttempts: 3,
-          delayFactor: Duration(seconds: 1),
-        );
-      }
+      await retry(
+            () => ScoreService.saveScore(
+          userId: userId!,
+          score: totalPoints,
+          mode: widget.level.toLowerCase(),
+          duration: totalTime,
+        ),
+        maxAttempts: 3,
+        delayFactor: const Duration(seconds: 1),
+      );
 
       await retry(
             () => ScoreService.saveQuizDetails(
@@ -136,34 +145,25 @@ class _QuizScreenState extends State<QuizScreen> {
           answers: answerDetails,
         ),
         maxAttempts: 3,
-        delayFactor: Duration(seconds: 1),
+        delayFactor: const Duration(seconds: 1),
       );
 
       if (mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (_) => AlertDialog(
-            title: const Text("🎉 Kết quả bài làm"),
-            content: Text("✅ Số câu đúng: $score/${questions.length}\n⭐ Tổng điểm: $totalPoints điểm${auto ? "\n⏱ Hết thời gian!" : ""}"),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pop(context);
-                },
-                child: const Text("Đóng"),
-              ),
-            ],
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ReviewScreen(
+              questions: questions,
+              userAnswers: userAnswers,
+              score: score,
+              totalTime: totalTime,
+            ),
           ),
         );
       }
     } catch (e) {
-      print("❌ Lỗi khi lưu dữ liệu quiz: $e");
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi khi lưu bài làm: $e')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Lỗi nộp bài: $e")));
       }
     } finally {
       if (mounted) setState(() => isSubmitting = false);
@@ -178,42 +178,41 @@ class _QuizScreenState extends State<QuizScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF4F6FA),
-      appBar: AppBar(
-        title: Text("Trình độ: ${widget.level.toUpperCase()}"),
-        centerTitle: true,
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
-            child: Chip(
-              label: Text(_formatTime(remainingSeconds), style: const TextStyle(fontWeight: FontWeight.bold)),
-              backgroundColor: Colors.white,
-              labelStyle: const TextStyle(color: Colors.deepPurple),
-            ),
+    return FutureBuilder<void>(
+      future: _initFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
+
+        if (questions.isEmpty) {
+          return const Scaffold(body: Center(child: Text("Không có câu hỏi.")));
+        }
+
+        final q = questions[currentIndex];
+        final questionText = q['questionText'] ?? q['content'];
+        final imageUrl = q['image_url'] ?? '';
+        final options = List<String>.from(q['options']);
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFF4F6FA),
+          appBar: AppBar(
+            title: Text("Trình độ: ${widget.level.toUpperCase()}"),
+            centerTitle: true,
+            backgroundColor: Colors.deepPurple,
+            foregroundColor: Colors.white,
+            actions: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                child: Chip(
+                  label: Text(_formatTime(remainingSeconds), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  backgroundColor: Colors.white,
+                  labelStyle: const TextStyle(color: Colors.deepPurple),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _questionsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text("Lỗi: ${snapshot.error}"));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text("Không có câu hỏi nào."));
-          }
-
-          questions = snapshot.data!;
-          final question = questions[currentIndex];
-          final options = List<String>.from(question['options'] ?? []);
-          final questionText = question['questionText'] ?? question['content'];
-          final imageUrl = question['image_url'] ?? '';
-
-          return Padding(
+          body: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
@@ -230,7 +229,7 @@ class _QuizScreenState extends State<QuizScreen> {
                           child: CircleAvatar(
                             radius: 14,
                             backgroundColor: isCurrent ? Colors.orange : isAnswered ? Colors.green : Colors.grey,
-                            child: Text('${index + 1}', style: const TextStyle(color: Colors.white, fontSize: 12)),
+                            child: Text('${index + 1}', style: const TextStyle(fontSize: 12, color: Colors.white)),
                           ),
                         ),
                       );
@@ -238,7 +237,6 @@ class _QuizScreenState extends State<QuizScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-
                 Card(
                   elevation: 3,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -248,34 +246,29 @@ class _QuizScreenState extends State<QuizScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text("Câu ${currentIndex + 1}/${questions.length}: $questionText",
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                        ),
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                         if (imageUrl.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(top: 10),
-                            child: Image.network(imageUrl, height: 150, errorBuilder: (_, __, ___) => Icon(Icons.broken_image)),
+                            child: Image.network(imageUrl, height: 150, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image)),
                           ),
                       ],
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
-
                 ...options.asMap().entries.map((entry) {
-                  final index = entry.key;
+                  final i = entry.key;
                   final text = entry.value;
-                  final isSelected = userAnswers[currentIndex] == index;
+                  final isSelected = userAnswers[currentIndex] == i;
                   return Card(
                     color: isSelected ? Colors.deepPurple.shade100 : Colors.white,
-                    elevation: 1,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     child: ListTile(
                       title: Text(text),
-                      onTap: () => setState(() => userAnswers[currentIndex] = index),
+                      onTap: () => setState(() => userAnswers[currentIndex] = i),
                     ),
                   );
-                }).toList(),
-
+                }),
                 const Spacer(),
                 Row(
                   children: [
@@ -289,7 +282,9 @@ class _QuizScreenState extends State<QuizScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: isSubmitting ? null : () {
+                        onPressed: isSubmitting
+                            ? null
+                            : () {
                           if (currentIndex < questions.length - 1) {
                             setState(() => currentIndex++);
                           } else {
@@ -304,9 +299,9 @@ class _QuizScreenState extends State<QuizScreen> {
                 ),
               ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

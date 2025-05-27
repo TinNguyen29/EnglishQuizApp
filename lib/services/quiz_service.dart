@@ -252,4 +252,60 @@ class QuizService {
       throw Exception('Lỗi kết nối khi xóa câu hỏi: $e');
     }
   }
+
+  /// Lấy lịch sử làm bài của người dùng theo email
+  static Future<List<Map<String, dynamic>>> getUserTests(String email) async {
+    if (email.isEmpty) {
+      throw Exception('Email không được để trống.');
+    }
+
+    final baseUrl = await ServerConfig.getBaseUrl();
+    final Uri url = Uri.parse('$baseUrl/api/quiz-details?email=$email');
+    final token = await AuthService.getToken();
+
+    if (token == null) {
+      throw Exception('Vui lòng đăng nhập để xem lịch sử.');
+    }
+
+    try {
+      final response = await retry(
+            () => http.get(
+          url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ).timeout(Duration(seconds: 10)),
+        maxAttempts: 3,
+        delayFactor: Duration(seconds: 1),
+      );
+
+      print('Get Quiz History URL: $url');
+      print('Status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 401) {
+        throw Exception('Không được phép: Vui lòng đăng nhập lại.');
+      }
+
+      if (response.statusCode == 404) {
+        return []; // không có dữ liệu lịch sử nào
+      }
+
+      if (response.headers['content-type']?.contains('application/json') != true) {
+        throw Exception('Phản hồi không phải JSON.');
+      }
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.cast<Map<String, dynamic>>();
+      } else {
+        throw Exception('Không thể tải lịch sử: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      print('Lỗi kết nối (getUserTests): $e');
+      throw Exception('Lỗi kết nối khi tải lịch sử: $e');
+    }
+  }
+
 }
