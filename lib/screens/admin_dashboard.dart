@@ -17,10 +17,11 @@ class AdminDashboard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => const RankingScreen(
-              email: 'admin@gmail.com',
-              username: 'admin',
-            ),
+            builder:
+                (_) => const RankingScreen(
+                  email: 'admin@gmail.com',
+                  username: 'admin',
+                ),
           ),
         );
         break;
@@ -34,101 +35,199 @@ class AdminDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Trang quản trị'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              showSearch(
-                context: context,
-                delegate: CustomSearchDelegate(navigateTo: _navigateTo),
-              );
-            },
+      backgroundColor: const Color(0xFFF7F9FC),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header thông tin admin
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Xin chào,',
+                        style: TextStyle(fontSize: 16, color: Colors.black54),
+                      ),
+                      const Text(
+                        'Admin',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'admin@gmail.com',
+                        style: TextStyle(fontSize: 13, color: Colors.black45),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.search, color: Colors.black54),
+                        onPressed: () {
+                          showSearch(
+                            context: context,
+                            delegate: CustomSearchDelegate(
+                              navigateTo: _navigateTo,
+                            ),
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.logout, color: Colors.redAccent),
+                        onPressed: () => _logout(context),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 32),
+
+              const SizedBox(height: 32),
+
+              // Chức năng chính
+              const Text(
+                'Chức năng chính',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 16),
+
+              _buildAdminCard(
+                context,
+                title: 'Quản lý câu hỏi',
+                description: 'Thêm, sửa, xóa câu hỏi trong hệ thống.',
+                icon: Icons.quiz,
+                color: Colors.teal.shade600,
+                onTap: () => _navigateTo(context, 'Quản lý câu hỏi'),
+              ),
+
+              const SizedBox(height: 16),
+
+              _buildAdminCard(
+                context,
+                title: 'Xem xếp hạng',
+                description: 'Theo dõi bảng xếp hạng người chơi.',
+                icon: Icons.leaderboard,
+                color: Colors.deepOrange.shade600,
+                onTap: () => _navigateTo(context, 'Xem xếp hạng'),
+              ),
+
+              const SizedBox(height: 30),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const UserAccountsDrawerHeader(
-              decoration: BoxDecoration(color: Colors.teal),
-              accountName: Text('Admin', style: TextStyle(fontWeight: FontWeight.bold)),
-              accountEmail: Text('admin@gmail.com'),
-              currentAccountPicture: CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Icon(Icons.admin_panel_settings, size: 40, color: Colors.teal),
-              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: color,
             ),
-            _buildDrawerItem(context, icon: Icons.question_answer, title: 'Quản lý câu hỏi'),
-            _buildDrawerItem(context, icon: Icons.leaderboard, title: 'Xem xếp hạng'),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.redAccent),
-              title: const Text('Đăng xuất', style: TextStyle(color: Colors.redAccent)),
-              onTap: () => _logout(context),
-            ),
-          ],
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: GridView.count(
-          crossAxisCount: 2,
-          crossAxisSpacing: 20,
-          mainAxisSpacing: 20,
-          children: [
-            _buildDashboardCard(
-              context,
-              icon: Icons.question_answer,
-              title: 'Quản lý câu hỏi',
-              color: Colors.teal,
-            ),
-            _buildDashboardCard(
-              context,
-              icon: Icons.leaderboard,
-              title: 'Xem xếp hạng',
-              color: Colors.deepOrange,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawerItem(BuildContext context, {required IconData icon, required String title}) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      onTap: () => _navigateTo(context, title),
-    );
-  }
-
-  Widget _buildDashboardCard(BuildContext context, {
-    required IconData icon,
-    required String title,
-    required Color color,
-  }) {
-    return GestureDetector(
-      onTap: () => _navigateTo(context, title),
-      child: Card(
-        elevation: 6,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        color: color,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 48, color: Colors.white),
-              const SizedBox(height: 10),
-              Text(
-                title,
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-            ],
           ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdminCard(
+    BuildContext context, {
+    required String title,
+    required String description,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: color.withOpacity(0.15),
+              radius: 28,
+              child: Icon(icon, color: color, size: 28),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: const TextStyle(fontSize: 14, color: Colors.black54),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.black45,
+            ),
+          ],
         ),
       ),
     );
@@ -143,10 +242,7 @@ class CustomSearchDelegate extends SearchDelegate<dynamic> {
   @override
   List<Widget> buildActions(BuildContext context) {
     return [
-      IconButton(
-        icon: const Icon(Icons.clear),
-        onPressed: () => query = '',
-      ),
+      IconButton(icon: const Icon(Icons.clear), onPressed: () => query = ''),
     ];
   }
 
@@ -162,14 +258,15 @@ class CustomSearchDelegate extends SearchDelegate<dynamic> {
   Widget buildResults(BuildContext context) {
     navigateTo(context, query);
     close(context, null);
-    return Container(); // Không cần UI kết quả
+    return Container();
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final suggestions = ['Quản lý câu hỏi', 'Xem xếp hạng']
-        .where((item) => item.toLowerCase().contains(query.toLowerCase()))
-        .toList();
+    final suggestions =
+        ['Quản lý câu hỏi', 'Xem xếp hạng']
+            .where((item) => item.toLowerCase().contains(query.toLowerCase()))
+            .toList();
 
     return ListView.builder(
       itemCount: suggestions.length,

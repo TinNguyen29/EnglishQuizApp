@@ -89,6 +89,32 @@ class _QuizScreenState extends State<QuizScreen> {
     return "$m:$s";
   }
 
+  Color _getLevelColor() {
+    switch (widget.level.toLowerCase()) {
+      case 'easy':
+        return Colors.greenAccent.shade700;
+      case 'normal':
+        return Colors.orange.shade700;
+      case 'hard':
+        return Colors.redAccent;
+      default:
+        return Colors.blue;
+    }
+  }
+
+  String _getLevelTitle() {
+    switch (widget.level.toLowerCase()) {
+      case 'easy':
+        return 'Trình độ Dễ';
+      case 'normal':
+        return 'Trình độ Trung bình';
+      case 'hard':
+        return 'Trình độ Khó';
+      default:
+        return widget.level.toUpperCase();
+    }
+  }
+
   Future<void> _submitQuiz({bool auto = false}) async {
     if (isSubmitting) return;
     setState(() => isSubmitting = true);
@@ -182,122 +208,378 @@ class _QuizScreenState extends State<QuizScreen> {
       future: _initFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            backgroundColor: Color(0xFFF7F9FC),
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
 
         if (questions.isEmpty) {
-          return const Scaffold(body: Center(child: Text("Không có câu hỏi.")));
+          return const Scaffold(
+            backgroundColor: Color(0xFFF7F9FC),
+            body: Center(child: Text("Không có câu hỏi.")),
+          );
         }
 
         final q = questions[currentIndex];
         final questionText = q['questionText'] ?? q['content'];
         final imageUrl = q['image_url'] ?? '';
         final options = List<String>.from(q['options']);
+        final hasAnswered = userAnswers.containsKey(currentIndex);
+        final levelColor = _getLevelColor();
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF4F6FA),
-          appBar: AppBar(
-            title: Text("Trình độ: ${widget.level.toUpperCase()}"),
-            centerTitle: true,
-            backgroundColor: Colors.deepPurple,
-            foregroundColor: Colors.white,
-            actions: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
-                child: Chip(
-                  label: Text(_formatTime(remainingSeconds), style: const TextStyle(fontWeight: FontWeight.bold)),
-                  backgroundColor: Colors.white,
-                  labelStyle: const TextStyle(color: Colors.deepPurple),
-                ),
-              ),
-            ],
-          ),
-          body: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: List.generate(questions.length, (index) {
-                      final isAnswered = userAnswers.containsKey(index);
-                      final isCurrent = index == currentIndex;
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: GestureDetector(
-                          onTap: () => setState(() => currentIndex = index),
-                          child: CircleAvatar(
-                            radius: 14,
-                            backgroundColor: isCurrent ? Colors.orange : isAnswered ? Colors.green : Colors.grey,
-                            child: Text('${index + 1}', style: const TextStyle(fontSize: 12, color: Colors.white)),
+          backgroundColor: const Color(0xFFF7F9FC),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header với thông tin quiz
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _getLevelTitle(),
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: levelColor,
+                            ),
                           ),
-                        ),
-                      );
-                    }),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Câu ${currentIndex + 1}/${questions.length}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Timer và menu
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: levelColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: levelColor.withOpacity(0.3)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.timer, color: levelColor, size: 18),
+                                const SizedBox(width: 6),
+                                Text(
+                                  _formatTime(remainingSeconds),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: levelColor,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          PopupMenuButton<int>(
+                            icon: Icon(Icons.list, color: levelColor),
+                            onSelected: (index) {
+                              setState(() => currentIndex = index);
+                            },
+                            itemBuilder: (_) => List.generate(questions.length, (index) {
+                              final isAnswered = userAnswers.containsKey(index);
+                              return PopupMenuItem<int>(
+                                value: index,
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      isAnswered ? Icons.check_circle : Icons.radio_button_unchecked,
+                                      color: isAnswered ? Colors.green : Colors.grey,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text('Câu ${index + 1}'),
+                                  ],
+                                ),
+                              );
+                            }),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 16),
-                Card(
-                  elevation: 3,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  child: Padding(
+
+                  const SizedBox(height: 32),
+
+                  // Progress bar
+                  Container(
+                    width: double.infinity,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                    child: FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: (currentIndex + 1) / questions.length,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: levelColor,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Câu hỏi
+                  Container(
+                    width: double.infinity,
                     padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: levelColor.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("Câu ${currentIndex + 1}/${questions.length}: $questionText",
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: levelColor.withOpacity(0.15),
+                              radius: 16,
+                              child: Text(
+                                '${currentIndex + 1}',
+                                style: TextStyle(
+                                  color: levelColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            const Text(
+                              'Câu hỏi',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          questionText,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.black87,
+                            height: 1.5,
+                          ),
+                        ),
                         if (imageUrl.isNotEmpty)
                           Padding(
-                            padding: const EdgeInsets.only(top: 10),
-                            child: Image.network(imageUrl, height: 150, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image)),
+                            padding: const EdgeInsets.only(top: 16),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(
+                                imageUrl,
+                                height: 150,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
+                                  height: 150,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade200,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Center(
+                                    child: Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                       ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                ...options.asMap().entries.map((entry) {
-                  final i = entry.key;
-                  final text = entry.value;
-                  final isSelected = userAnswers[currentIndex] == i;
-                  return Card(
-                    color: isSelected ? Colors.deepPurple.shade100 : Colors.white,
-                    child: ListTile(
-                      title: Text(text),
-                      onTap: () => setState(() => userAnswers[currentIndex] = i),
+
+                  const SizedBox(height: 20),
+
+                  // Đáp án
+                  const Text(
+                    'Chọn đáp án:',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
                     ),
-                  );
-                }),
-                const Spacer(),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: isSubmitting || currentIndex == 0 ? null : () => setState(() => currentIndex--),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.grey, minimumSize: const Size(double.infinity, 50)),
-                        child: const Text("Quay lại"),
+                  ),
+                  const SizedBox(height: 12),
+
+                  ...options.asMap().entries.map((entry) {
+                    final i = entry.key;
+                    final text = entry.value;
+                    final isSelected = userAnswers[currentIndex] == i;
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: InkWell(
+                        onTap: () => setState(() => userAnswers[currentIndex] = i),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: isSelected ? levelColor.withOpacity(0.1) : Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: isSelected ? levelColor : Colors.grey.shade300,
+                              width: isSelected ? 2 : 1,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: isSelected
+                                    ? levelColor.withOpacity(0.2)
+                                    : Colors.grey.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isSelected ? levelColor : Colors.transparent,
+                                  border: Border.all(
+                                    color: isSelected ? levelColor : Colors.grey.shade400,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: isSelected
+                                    ? const Icon(Icons.check, color: Colors.white, size: 16)
+                                    : null,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  text,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    color: isSelected ? levelColor : Colors.black87,
+                                    fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: isSubmitting
-                            ? null
-                            : () {
-                          if (currentIndex < questions.length - 1) {
-                            setState(() => currentIndex++);
-                          } else {
-                            _submitQuiz();
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple, minimumSize: const Size(double.infinity, 50)),
-                        child: Text(currentIndex < questions.length - 1 ? "Tiếp theo" : "Nộp bài"),
+                    );
+                  }),
+
+                  const SizedBox(height: 32),
+
+                  // Nút điều hướng
+                  Row(
+                    children: [
+                      if (currentIndex > 0)
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: isSubmitting ? null : () => setState(() => currentIndex--),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey.shade100,
+                              foregroundColor: Colors.black87,
+                              minimumSize: const Size(double.infinity, 52),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                side: BorderSide(color: Colors.grey.shade300),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.arrow_back_ios, size: 16),
+                                SizedBox(width: 8),
+                                Text("Quay lại", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      if (currentIndex > 0) const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: isSubmitting || !hasAnswered
+                              ? null
+                              : () {
+                            if (currentIndex < questions.length - 1) {
+                              setState(() => currentIndex++);
+                            } else {
+                              _submitQuiz();
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: levelColor,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(double.infinity, 52),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            elevation: 2,
+                          ),
+                          child: isSubmitting
+                              ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                              : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                currentIndex < questions.length - 1 ? "Tiếp theo" : "Nộp bài",
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Icon(
+                                currentIndex < questions.length - 1
+                                    ? Icons.arrow_forward_ios
+                                    : Icons.send,
+                                size: 16,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+
+                  const SizedBox(height: 30),
+                ],
+              ),
             ),
           ),
         );
