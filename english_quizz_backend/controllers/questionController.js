@@ -29,7 +29,6 @@ exports.createQuestion = async (req, res) => {
   }
 };
 
-
 // Lấy tất cả câu hỏi (có thể lọc theo level)
 exports.getAllQuestions = async (req, res) => {
   try {
@@ -54,42 +53,40 @@ exports.getQuestionById = async (req, res) => {
   }
 };
 
-// Cập nhật câu hỏi
+// ✅ Cập nhật câu hỏi — đã sửa lỗi lồng nhau
 exports.updateQuestion = async (req, res) => {
-  exports.updateQuestion = async (req, res) => {
-    const { content, options, correct_answer, level, image_url } = req.body;
-  
-    if (
-      !content || typeof content !== 'string' ||
-      !Array.isArray(options) || options.length !== 4 || options.some(opt => typeof opt !== 'string') ||
-      typeof correct_answer !== 'number' || correct_answer < 0 || correct_answer > 3 ||
-      !['easy', 'normal', 'hard'].includes(level)
-    ) {
-      return res.status(400).json({ message: '❗ Dữ liệu cập nhật không hợp lệ.' });
+  const { content, options, correct_answer, level, image_url } = req.body;
+
+  if (
+    !content || typeof content !== 'string' ||
+    !Array.isArray(options) || options.length !== 4 || options.some(opt => typeof opt !== 'string') ||
+    typeof correct_answer !== 'number' || correct_answer < 0 || correct_answer > 3 ||
+    !['easy', 'normal', 'hard'].includes(level)
+  ) {
+    return res.status(400).json({ message: '❗ Dữ liệu cập nhật không hợp lệ.' });
+  }
+
+  try {
+    const updated = await Question.findByIdAndUpdate(
+      req.params.id,
+      {
+        content,
+        options,
+        correct_answer,
+        level,
+        image_url
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: `❌ Không tìm thấy câu hỏi với ID: ${req.params.id}` });
     }
-  
-    try {
-      const updated = await Question.findByIdAndUpdate(
-        req.params.id,
-        {
-          content,
-          options,
-          correct_answer,
-          level,
-          image_url
-        },
-        { new: true }
-      );
-  
-      if (!updated) {
-        return res.status(404).json({ message: `❌ Không tìm thấy câu hỏi với ID: ${req.params.id}` });
-      }
-  
-      res.json(updated);
-    } catch (error) {
-      res.status(500).json({ message: '❌ Lỗi khi cập nhật câu hỏi: ' + error.message });
-    }
-  };  
+
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: '❌ Lỗi khi cập nhật câu hỏi: ' + error.message });
+  }
 };
 
 // Xóa câu hỏi

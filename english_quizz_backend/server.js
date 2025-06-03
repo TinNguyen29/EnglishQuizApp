@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const router = express.Router();
 const scoreController = require('./controllers/scoreController');
+const quizDetailsController = require('./controllers/quizDetailsController');
 require('dotenv').config();
 
 // Khởi tạo app từ express
@@ -35,8 +36,6 @@ app.use('/uploads', express.static('uploads'));
 app.get('/', (req, res) => {
   res.send('Backend đang hoạt động!');
 });
-
-router.post('/', scoreController.saveScore);
 
 // Các routes chính
 app.use('/api', authRoutes);               

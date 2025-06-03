@@ -10,11 +10,13 @@ import 'review_screen.dart';
 class QuizScreen extends StatefulWidget {
   final String level;
   final int timeLimitSeconds;
+  final String? quizId; // Thêm tham số quizId vào đây, làm cho nó tùy chọn (nullable)
 
   const QuizScreen({
     Key? key,
     required this.level,
     required this.timeLimitSeconds,
+    this.quizId, // Khai báo tham số quizId trong constructor
   }) : super(key: key);
 
   @override
@@ -55,14 +57,21 @@ class _QuizScreenState extends State<QuizScreen> {
     }
 
     try {
-      final fetchedQuestions = await QuizService.fetchQuestions(widget.level);
+      List<Map<String, dynamic>> fetchedQuestions;
+      if (widget.quizId != null) {
+        fetchedQuestions = await QuizService.fetchQuestions(widget.level);
+      } else {
+        fetchedQuestions = await QuizService.fetchQuestions(widget.level);
+      }
+
+
       for (var q in fetchedQuestions) {
         if (q['_id'] == null || q['options'] == null || (q['questionText'] ?? q['content']) == null) {
           throw Exception("Dữ liệu câu hỏi không hợp lệ.");
         }
       }
       questions = fetchedQuestions;
-      remainingSeconds = widget.timeLimitSeconds;
+      remainingSeconds = widget.timeLimitSeconds; // Sử dụng timeLimitSeconds từ widget
       _startTimer();
     } catch (e) {
       if (mounted) {
@@ -120,7 +129,7 @@ class _QuizScreenState extends State<QuizScreen> {
     setState(() => isSubmitting = true);
     timer?.cancel();
 
-    if (userAnswers.length < questions.length) {
+    if (!auto && userAnswers.length < questions.length) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Bạn cần trả lời tất cả câu hỏi.")),
@@ -136,22 +145,24 @@ class _QuizScreenState extends State<QuizScreen> {
     for (int i = 0; i < questions.length; i++) {
       final selected = userAnswers[i];
       final correct = questions[i]['correctAnswer'] ?? questions[i]['correct_answer'];
-      final isCorrect = selected == correct;
+
+      final isCorrect = (selected != null && correct != null && selected == correct);
       if (isCorrect) score++;
 
       answerDetails.add({
         "questionId": questions[i]['_id'],
-        "selectedAnswer": selected != null ? questions[i]['options'][selected] : null,
+        "selectedAnswer": selected,
         "timeTaken": 0,
-        "isCorrect": isCorrect,
+        "isCorrect": isCorrect, // đảm bảo luôn là true/false
       });
     }
 
     final totalPoints = score;
-    final quizId = const Uuid().v4();
+    final quizId = widget.quizId ?? const Uuid().v4();
     final totalTime = widget.timeLimitSeconds - remainingSeconds;
 
     try {
+      // Lưu điểm số
       await retry(
             () => ScoreService.saveScore(
           userId: userId!,
@@ -163,12 +174,15 @@ class _QuizScreenState extends State<QuizScreen> {
         delayFactor: const Duration(seconds: 1),
       );
 
+      // Lưu chi tiết bài quiz
       await retry(
             () => ScoreService.saveQuizDetails(
           userId: userId!,
           quizId: quizId,
           level: widget.level,
           answers: answerDetails,
+          score: totalPoints,
+          duration: totalTime,
         ),
         maxAttempts: 3,
         delayFactor: const Duration(seconds: 1),
@@ -435,7 +449,7 @@ class _QuizScreenState extends State<QuizScreen> {
                   ...options.asMap().entries.map((entry) {
                     final i = entry.key;
                     final text = entry.value;
-                    final isSelected = userAnswers[currentIndex] == i;
+                    final isSelected = userAnswers.containsKey(currentIndex) && userAnswers[currentIndex] == i;
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),

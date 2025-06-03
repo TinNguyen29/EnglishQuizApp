@@ -1,6 +1,7 @@
 import 'package:englishquizapp/services/ranking_service.dart';
 import 'package:flutter/material.dart';
-import '../services/score_service.dart';
+// import '../services/score_service.dart'; // Không cần thiết nếu chỉ dùng RankingService
+import 'package:englishquizapp/models/user_ranking.dart'; // Import UserRanking model
 
 class RankingScreen extends StatefulWidget {
   final String email;
@@ -14,7 +15,7 @@ class RankingScreen extends StatefulWidget {
 
 class _RankingScreenState extends State<RankingScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  List<Map<String, dynamic>> rankings = [];
+  List<UserRanking> rankings = []; // Thay đổi kiểu dữ liệu ở đây
   String errorMessage = "";
   final List<String> modes = ['easy', 'normal', 'hard'];
   String selectedMode = 'easy';
@@ -49,12 +50,20 @@ class _RankingScreenState extends State<RankingScreen> with SingleTickerProvider
     });
 
     try {
-      List<Map<String, dynamic>> fetchedRankings = await RankingService.fetchRankings(mode);
+      // Kiểu trả về đã thay đổi thành List<UserRanking>
+      List<UserRanking> fetchedRankings = await RankingService.fetchRankings(mode);
       setState(() {
         rankings = fetchedRankings;
         errorMessage = "";
         isLoading = false;
       });
+      // DEBUG LOG: In ra giá trị sau khi parse
+      print('--- Debugging Parsed UserRanking Data in RankingScreen ---');
+      for (var user in fetchedRankings) {
+        print('  User: ${user.username}, MaxScore: ${user.maxScore}, BestDuration: ${user.bestDuration}');
+      }
+      print('---------------------------------------------------------');
+
     } catch (e) {
       setState(() {
         errorMessage = "Không thể tải xếp hạng. Vui lòng thử lại sau.";
@@ -103,7 +112,8 @@ class _RankingScreenState extends State<RankingScreen> with SingleTickerProvider
     }
   }
 
-  Widget _buildRankingCard(Map<String, dynamic> user, int index) {
+  // Thay đổi kiểu tham số user thành UserRanking
+  Widget _buildRankingCard(UserRanking user, int index) {
     Color rankColor;
     IconData rankIcon;
 
@@ -122,7 +132,8 @@ class _RankingScreenState extends State<RankingScreen> with SingleTickerProvider
     }
 
     // Kiểm tra xem có phải người dùng hiện tại không
-    bool isCurrentUser = user['email'] == widget.email;
+    // Truy cập email bằng user.email
+    bool isCurrentUser = user.email == widget.email;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -184,7 +195,7 @@ class _RankingScreenState extends State<RankingScreen> with SingleTickerProvider
                   children: [
                     Expanded(
                       child: Text(
-                        user['username'] ?? 'Unknown',
+                        user.username, // Truy cập username bằng user.username
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -220,7 +231,7 @@ class _RankingScreenState extends State<RankingScreen> with SingleTickerProvider
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'Điểm: ${user['maxScore'] ?? 0}',
+                      'Điểm: ${user.maxScore}', // Truy cập maxScore bằng user.maxScore
                       style: const TextStyle(
                         fontSize: 14,
                         color: Colors.black54,
@@ -235,7 +246,7 @@ class _RankingScreenState extends State<RankingScreen> with SingleTickerProvider
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${user['bestDuration'] ?? 0}s',
+                      '${user.bestDuration}s', // Truy cập bestDuration bằng user.bestDuration
                       style: const TextStyle(
                         fontSize: 14,
                         color: Colors.black54,

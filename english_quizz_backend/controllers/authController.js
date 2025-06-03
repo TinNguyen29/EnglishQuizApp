@@ -1,4 +1,4 @@
-const User = require('../models/user');
+const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -20,24 +20,35 @@ exports.register = async (req, res) => {
 
 
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: 'Không tìm thấy người dùng' });
 
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) return res.status(401).json({ message: 'Mật khẩu không đúng' });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).json({ message: 'Mật khẩu không đúng' });
 
-  const token = jwt.sign({ userId: user._id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
-  res.json({
-    token,
-    user: {
-      id: user._id,
-      username: user.username,
-      email: user.email,
-      role: (user.role || 'user').toString().trim().toLowerCase(), 
+    if (!JWT_SECRET) {
+      console.error("JWT_SECRET chưa được thiết lập");
+      return res.status(500).json({ message: "JWT_SECRET bị thiếu trên server" });
     }
-  });
+
+    const token = jwt.sign({ userId: user._id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: (user.role || 'user').toString().trim().toLowerCase(),
+      }
+    });
+  } catch (err) {
+    console.error("Lỗi đăng nhập:", err);
+    res.status(500).json({ message: 'Lỗi server: ' + err.message });
+  }
 };
+
 
 exports.resetPassword = async (req, res) => {
   const { email, newPassword } = req.body;

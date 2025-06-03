@@ -12,5 +12,5 @@ router.delete('/:id', authenticateToken, requireAdmin, questionController.delete
 
 // Mọi người đều có thể xem câu hỏi theo level
 router.get('/', questionController.getAllQuestions); 
-router.get('/:id', questionController.getQuestionById); 
+router.get('/:id', questionController.getQuestionById);
 module.exports = router;

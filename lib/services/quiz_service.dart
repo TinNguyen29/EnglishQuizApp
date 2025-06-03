@@ -1,68 +1,45 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:retry/retry.dart';
+import 'package:dio/dio.dart'; // Import Dio
 import 'package:englishquizapp/constants/server_config.dart';
 import 'package:englishquizapp/services/auth_service.dart';
 
 class QuizService {
-  static const String endpoint = '/questions';
+  static final Dio _dio = Dio(); // Khởi tạo Dio client
+  static const String _quizEndpoint = '/questions';
+  static const String _quizDetailsEndpoint = '/quiz-details'; // Endpoint cho lịch sử quiz và chi tiết quiz
 
-  /// Lấy danh sách câu hỏi theo level
+  // Hàm để lấy câu hỏi mới theo level
   static Future<List<Map<String, dynamic>>> fetchQuestions(String level) async {
-    if (!['easy', 'normal', 'hard'].contains(level.toLowerCase())) {
-      return Future.error('Mức độ không hợp lệ. Chọn easy, normal hoặc hard.');
-    }
-
     final baseUrl = await ServerConfig.getBaseUrl();
-    final Uri url = Uri.parse('$baseUrl/api$endpoint?level=$level');
+    final String url = '$baseUrl/api$_quizEndpoint/random?level=$level';
     final token = await AuthService.getToken();
 
     if (token == null) {
-      return Future.error('Vui lòng đăng nhập để lấy câu hỏi.');
+      throw Exception('Vui lòng đăng nhập để tải câu hỏi.');
     }
 
     try {
-      final response = await retry(
-            () => http.get(
-          url,
+      final response = await _dio.get(
+        url,
+        options: Options(
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',
           },
-        ).timeout(Duration(seconds: 10)),
-        maxAttempts: 3,
-        delayFactor: Duration(seconds: 1),
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        ),
       );
 
-      print('Fetch Questions URL: $url');
-      print('Status code: ${response.statusCode}');
-      print('Response body: ${response.body}');
-
-      if (response.statusCode == 401) {
-        return Future.error('Không được phép: Vui lòng đăng nhập lại.');
-      }
-
-      if (response.statusCode == 404) {
-        return Future.error('Không tìm thấy endpoint. Vui lòng kiểm tra URL.');
-      }
-
-      if (response.headers['content-type']?.contains('application/json') != true) {
-        return Future.error('Phản hồi không phải JSON.');
-      }
-
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        if (data is List) {
-          return data.cast<Map<String, dynamic>>();
-        } else {
-          throw Exception('Dữ liệu trả về không phải là một danh sách');
-        }
+        // Dio tự động parse JSON, response.data đã là List<dynamic>
+        return List<Map<String, dynamic>>.from(response.data);
       } else {
-        throw Exception('Lỗi tải dữ liệu: ${response.statusCode} - ${response.body}');
+        throw Exception('Lỗi tải câu hỏi: ${response.statusCode} - ${response.data}');
       }
+    } on DioException catch (e) {
+      throw Exception('Lỗi kết nối khi tải câu hỏi: ${e.message}');
     } catch (e) {
-      print('Lỗi kết nối (fetch questions): $e');
-      throw Exception('Lỗi kết nối: $e');
+      throw Exception('Lỗi không xác định khi tải câu hỏi: $e');
     }
   }
 
@@ -79,7 +56,7 @@ class QuizService {
     }
 
     final baseUrl = await ServerConfig.getBaseUrl();
-    final Uri url = Uri.parse('$baseUrl/api$endpoint');
+    final String url = '$baseUrl/api$_quizEndpoint'; // Sử dụng _quizEndpoint
     final token = await AuthService.getToken();
 
     if (token == null) {
@@ -88,24 +65,24 @@ class QuizService {
 
     try {
       print('Dữ liệu gửi lên backend:');
-      print(jsonEncode(data));
+      print(data); // Dio tự động encode data
 
-      final response = await retry(
-            () => http.post(
-          url,
+      final response = await _dio.post( // Sử dụng _dio.post
+        url,
+        options: Options(
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',
           },
-          body: jsonEncode(data),
-        ).timeout(Duration(seconds: 10)),
-        maxAttempts: 3,
-        delayFactor: Duration(seconds: 1),
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        ),
+        data: data, // body trong Dio là data
       );
 
       print('Create Question URL: $url');
       print('Status code: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      print('Response body: ${response.data}');
 
       if (response.statusCode == 401) {
         throw Exception('Không được phép: Vui lòng đăng nhập với tài khoản admin.');
@@ -115,17 +92,16 @@ class QuizService {
         throw Exception('Chỉ admin mới được tạo câu hỏi.');
       }
 
-      if (response.headers['content-type']?.contains('application/json') != true) {
-        throw Exception('Phản hồi không phải JSON.');
-      }
-
       if (response.statusCode != 201) {
-        throw Exception('Tạo câu hỏi thất bại: ${response.statusCode} - ${response.body}');
+        throw Exception('Tạo câu hỏi thất bại: ${response.statusCode} - ${response.data}');
       }
       print('✅ Tạo câu hỏi thành công!');
+    } on DioException catch (e) {
+      print('Lỗi kết nối (create question): ${e.message}');
+      throw Exception('Lỗi kết nối khi tạo câu hỏi: ${e.message}');
     } catch (e) {
-      print('Lỗi kết nối (create question): $e');
-      throw Exception('Lỗi kết nối khi tạo câu hỏi: $e');
+      print('Lỗi không xác định khi tạo câu hỏi: $e');
+      throw Exception('Lỗi không xác định khi tạo câu hỏi: $e');
     }
   }
 
@@ -145,7 +121,7 @@ class QuizService {
     }
 
     final baseUrl = await ServerConfig.getBaseUrl();
-    final Uri url = Uri.parse('$baseUrl/api$endpoint/$id');
+    final String url = '$baseUrl/api$_quizEndpoint/$id'; // Sử dụng _quizEndpoint
     final token = await AuthService.getToken();
 
     if (token == null) {
@@ -153,22 +129,22 @@ class QuizService {
     }
 
     try {
-      final response = await retry(
-            () => http.put(
-          url,
+      final response = await _dio.put( // Sử dụng _dio.put
+        url,
+        options: Options(
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',
           },
-          body: jsonEncode(data),
-        ).timeout(Duration(seconds: 10)),
-        maxAttempts: 3,
-        delayFactor: Duration(seconds: 1),
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        ),
+        data: data, // body trong Dio là data
       );
 
       print('Update Question URL: $url');
       print('Status code: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      print('Response body: ${response.data}');
 
       if (response.statusCode == 401) {
         throw Exception('Không được phép: Vui lòng đăng nhập với tài khoản admin.');
@@ -182,17 +158,16 @@ class QuizService {
         throw Exception('Không tìm thấy câu hỏi.');
       }
 
-      if (response.headers['content-type']?.contains('application/json') != true) {
-        throw Exception('Phản hồi không phải JSON.');
-      }
-
       if (response.statusCode != 200) {
-        throw Exception('Cập nhật câu hỏi thất bại: ${response.statusCode} - ${response.body}');
+        throw Exception('Cập nhật câu hỏi thất bại: ${response.statusCode} - ${response.data}');
       }
       print('✅ Cập nhật câu hỏi thành công!');
+    } on DioException catch (e) {
+      print('Lỗi kết nối (update question): ${e.message}');
+      throw Exception('Lỗi kết nối khi cập nhật câu hỏi: ${e.message}');
     } catch (e) {
-      print('Lỗi kết nối (update question): $e');
-      throw Exception('Lỗi kết nối khi cập nhật câu hỏi: $e');
+      print('Lỗi không xác định khi cập nhật câu hỏi: $e');
+      throw Exception('Lỗi không xác định khi cập nhật câu hỏi: $e');
     }
   }
 
@@ -203,7 +178,7 @@ class QuizService {
     }
 
     final baseUrl = await ServerConfig.getBaseUrl();
-    final Uri url = Uri.parse('$baseUrl/api$endpoint/$id');
+    final String url = '$baseUrl/api$_quizEndpoint/$id'; // Sử dụng _quizEndpoint
     final token = await AuthService.getToken();
 
     if (token == null) {
@@ -211,21 +186,21 @@ class QuizService {
     }
 
     try {
-      final response = await retry(
-            () => http.delete(
-          url,
+      final response = await _dio.delete( // Sử dụng _dio.delete
+        url,
+        options: Options(
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',
           },
-        ).timeout(Duration(seconds: 10)),
-        maxAttempts: 3,
-        delayFactor: Duration(seconds: 1),
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        ),
       );
 
       print('Delete Question URL: $url');
       print('Status code: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      print('Response body: ${response.data}');
 
       if (response.statusCode == 401) {
         throw Exception('Không được phép: Vui lòng đăng nhập với tài khoản admin.');
@@ -239,17 +214,16 @@ class QuizService {
         throw Exception('Không tìm thấy câu hỏi.');
       }
 
-      if (response.headers['content-type']?.contains('application/json') != true) {
-        throw Exception('Phản hồi không phải JSON.');
-      }
-
       if (response.statusCode != 200) {
-        throw Exception('Xóa câu hỏi thất bại: ${response.statusCode} - ${response.body}');
+        throw Exception('Xóa câu hỏi thất bại: ${response.statusCode} - ${response.data}');
       }
       print('✅ Xóa câu hỏi thành công!');
-    } catch (e) {
-      print('Lỗi kết nối (delete question): $e');
+    } on DioException catch (e) {
+      print('Lỗi kết nối (delete question): ${e.message}');
       throw Exception('Lỗi kết nối khi xóa câu hỏi: $e');
+    } catch (e) {
+      print('Lỗi không xác định khi xóa câu hỏi: $e');
+      throw Exception('Lỗi không xác định khi xóa câu hỏi: $e');
     }
   }
 
@@ -260,7 +234,8 @@ class QuizService {
     }
 
     final baseUrl = await ServerConfig.getBaseUrl();
-    final Uri url = Uri.parse('$baseUrl/api/quiz-details?email=$email');
+    // Sử dụng _quizDetailsEndpoint đã định nghĩa
+    final String url = '$baseUrl/api$_quizDetailsEndpoint?email=$email';
     final token = await AuthService.getToken();
 
     if (token == null) {
@@ -268,44 +243,80 @@ class QuizService {
     }
 
     try {
-      final response = await retry(
-            () => http.get(
-          url,
+      final response = await _dio.get( // Sử dụng _dio.get
+        url,
+        options: Options(
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',
           },
-        ).timeout(Duration(seconds: 10)),
-        maxAttempts: 3,
-        delayFactor: Duration(seconds: 1),
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        ),
       );
 
       print('Get Quiz History URL: $url');
       print('Status code: ${response.statusCode}');
-      print('Response body: ${response.body}');
-
-      if (response.statusCode == 401) {
-        throw Exception('Không được phép: Vui lòng đăng nhập lại.');
-      }
-
-      if (response.statusCode == 404) {
-        return []; // không có dữ liệu lịch sử nào
-      }
-
-      if (response.headers['content-type']?.contains('application/json') != true) {
-        throw Exception('Phản hồi không phải JSON.');
-      }
+      print('Response body: ${response.data}'); // response.data đã là JSON parse
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        return data.cast<Map<String, dynamic>>();
+        // Đảm bảo response.data là một List
+        if (response.data is List) {
+          return List<Map<String, dynamic>>.from(response.data);
+        } else {
+          throw Exception('Phản hồi lịch sử quiz không phải là danh sách.');
+        }
       } else {
-        throw Exception('Không thể tải lịch sử: ${response.statusCode} - ${response.body}');
+        throw Exception('Không thể tải lịch sử: ${response.statusCode} - ${response.data}');
       }
+    } on DioException catch (e) {
+      print('❌ Lỗi kết nối (getUserTests): ${e.message}');
+      if (e.response != null) {
+        print('Phản hồi lỗi từ server: ${e.response?.data}');
+      }
+      throw Exception('Lỗi kết nối khi tải lịch sử: ${e.message}');
     } catch (e) {
-      print('Lỗi kết nối (getUserTests): $e');
-      throw Exception('Lỗi kết nối khi tải lịch sử: $e');
+      print('❌ Lỗi không xác định khi tải lịch sử: $e');
+      throw Exception('Lỗi không xác định khi tải lịch sử: $e');
     }
   }
 
+  // Hàm để lấy chi tiết một bài quiz cụ thể (cho chức năng làm lại bài)
+  static Future<Map<String, dynamic>> getQuizDetailsById(String quizId) async {
+    final baseUrl = await ServerConfig.getBaseUrl();
+    final String url = '$baseUrl/api$_quizDetailsEndpoint/$quizId'; // Ví dụ: /api/quiz-details/:quizId
+    final token = await AuthService.getToken();
+
+    if (token == null) {
+      throw Exception('Vui lòng đăng nhập để xem chi tiết quiz.');
+    }
+
+    try {
+      final response = await _dio.get(
+        url,
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        if (response.data is Map<String, dynamic>) {
+          return response.data;
+        } else {
+          throw Exception('Phản hồi chi tiết quiz không hợp lệ.');
+        }
+      } else {
+        throw Exception('Lỗi tải chi tiết quiz: ${response.statusCode} - ${response.data}');
+      }
+    } on DioException catch (e) {
+      throw Exception('Lỗi kết nối khi tải chi tiết quiz: ${e.message}');
+    } catch (e) {
+      throw Exception('Lỗi không xác định khi tải chi tiết quiz: $e');
+    }
+  }
 }

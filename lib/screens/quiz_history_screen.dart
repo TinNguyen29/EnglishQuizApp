@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/quiz_service.dart';
 import 'review_screen.dart';
+import 'quiz_screen.dart'; // Import QuizScreen for redo functionality
 
 class QuizHistoryScreen extends StatefulWidget {
   final String email;
@@ -11,27 +12,51 @@ class QuizHistoryScreen extends StatefulWidget {
   State<QuizHistoryScreen> createState() => _QuizHistoryScreenState();
 }
 
-class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
-  List<Map<String, dynamic>> quizHistory = [];
+class _QuizHistoryScreenState extends State<QuizHistoryScreen> with SingleTickerProviderStateMixin {
+  List<Map<String, dynamic>> _allQuizHistory = []; // Store all fetched history
+  List<Map<String, dynamic>> _filteredQuizHistory = []; // Store filtered history for display
   bool isLoading = true;
   String errorMessage = "";
+
+  late TabController _tabController;
+  final List<String> modes = ['all', 'easy', 'normal', 'hard']; // Added 'all' mode
+  String selectedMode = 'all'; // Default to 'all' mode
 
   @override
   void initState() {
     super.initState();
-    fetchQuizHistory();
+    _tabController = TabController(length: modes.length, vsync: this);
+    _loadQuizHistory(); // Load all history initially
+
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) { // Only react when tab selection is final
+        String mode = modes[_tabController.index];
+        setState(() {
+          selectedMode = mode;
+          _applyFilterAndSort(); // Apply filter and sort when mode changes
+        });
+      }
+    });
   }
 
-  Future<void> fetchQuizHistory() async {
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadQuizHistory() async {
     setState(() {
       isLoading = true;
       errorMessage = "";
     });
 
     try {
+      // Fetch all quizzes for the user
       final data = await QuizService.getUserTests(widget.email);
       setState(() {
-        quizHistory = data;
+        _allQuizHistory = data;
+        _applyFilterAndSort(); // Apply filter and sort after fetching
         isLoading = false;
       });
     } catch (e) {
@@ -42,6 +67,28 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
       debugPrint('Lỗi khi tải lịch sử quiz: $e');
     }
   }
+
+  void _applyFilterAndSort() {
+    List<Map<String, dynamic>> tempHistory = List.from(_allQuizHistory);
+
+    // Filter by mode
+    if (selectedMode != 'all') {
+      tempHistory = tempHistory.where((quiz) =>
+      (quiz['level']?.toLowerCase() == selectedMode)).toList();
+    }
+
+    // Sort by date (most recent first)
+    tempHistory.sort((a, b) {
+      final dateA = DateTime.parse(a['createdAt']);
+      final dateB = DateTime.parse(b['createdAt']);
+      return dateB.compareTo(dateA); // Descending order
+    });
+    for (var quiz in tempHistory) {
+      print('📅 Quiz: ${quiz['createdAt']}');
+    }
+    _filteredQuizHistory = tempHistory;
+  }
+
 
   void viewQuizDetail(Map<String, dynamic> quizData) {
     final questions = List<Map<String, dynamic>>.from(quizData['questions']);
@@ -61,6 +108,22 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
           userAnswers: userAnswers,
           score: quizData['score'],
           totalTime: quizData['duration'],
+        ),
+      ),
+    );
+  }
+
+  void _redoQuiz(String quizId, String level) {
+    // Assuming QuizScreen can take quizId and level to load a specific quiz
+    // Fix 1: Add required timeLimitSeconds parameter
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => QuizScreen(
+          quizId: quizId, // Pass quizId to load specific quiz
+          level: level, // Pass level (mode)
+          timeLimitSeconds: 600, // <-- Added a default value for timeLimitSeconds (10 minutes)
+          // You might need to pass other parameters like category, etc., depending on your QuizScreen constructor
         ),
       ),
     );
@@ -106,6 +169,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
   }
 
   Color _getScoreColor(int score, int totalQuestions) {
+    if (totalQuestions == 0) return Colors.grey.shade600; // Avoid division by zero
     double percentage = score / totalQuestions;
     if (percentage >= 0.8) return Colors.green.shade600;
     if (percentage >= 0.6) return Colors.orange.shade600;
@@ -121,6 +185,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
     final score = quiz['score'] ?? 0;
     final totalQuestions = (quiz['questions'] as List?)?.length ?? 10;
     final duration = quiz['duration'] ?? 0;
+    final quizId = quiz['_id']?.toString(); // Get quizId for redo button
 
     final levelColor = _getLevelColor(level);
     final scoreColor = _getScoreColor(score, totalQuestions);
@@ -320,23 +385,49 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
 
             const SizedBox(height: 12),
 
-            // Nút xem chi tiết
+            // Nút xem chi tiết và Làm lại bài quiz
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align items to ends
               children: [
-                Text(
-                  'Xem chi tiết',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: levelColor,
-                    fontWeight: FontWeight.w600,
+                // Nút Làm lại bài quiz
+                if (quizId != null && level != null) // Only show if quizId and level are available
+                  ElevatedButton.icon(
+                    onPressed: () => _redoQuiz(quizId, level),
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: const Text('Làm lại bài quiz'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: levelColor.withOpacity(0.2),
+                      foregroundColor: levelColor, // Fix 2: Changed to levelColor
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 4),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  size: 14,
-                  color: levelColor,
+
+                // Nút xem chi tiết
+                InkWell(
+                  onTap: () => viewQuizDetail(quiz),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Xem chi tiết',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: levelColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 14,
+                        color: levelColor,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -367,179 +458,240 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
         ),
         centerTitle: true,
         actions: [
-          if (quizHistory.isNotEmpty)
+          if (_allQuizHistory.isNotEmpty) // Refresh button for all history
             IconButton(
               icon: Icon(Icons.refresh, color: Colors.purple.shade600),
-              onPressed: fetchQuizHistory,
+              onPressed: _loadQuizHistory,
             ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: isLoading
-            ? const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text(
-                'Đang tải lịch sử...',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black54,
-                ),
+      body: Column(
+        children: [
+          // Tab bar với thiết kế custom cho các mode
+          Container(
+            color: Colors.white,
+            child: Container(
+              margin: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF7F9FC),
+                borderRadius: BorderRadius.circular(12),
               ),
-            ],
-          ),
-        )
-            : errorMessage.isNotEmpty
-            ? Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red.shade300,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                errorMessage,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.red.shade600,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: fetchQuizHistory,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple.shade600,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('Thử lại'),
-              ),
-            ],
-          ),
-        )
-            : quizHistory.isEmpty
-            ? Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.history_outlined,
-                size: 64,
-                color: Colors.grey.shade400,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Bạn chưa làm bài quiz nào',
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Hãy bắt đầu làm bài quiz đầu tiên của bạn!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey.shade500,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple.shade600,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('Về trang chủ'),
-              ),
-            ],
-          ),
-        )
-            : RefreshIndicator(
-          onRefresh: fetchQuizHistory,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header thống kê
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
+              child: TabBar(
+                controller: _tabController,
+                indicator: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.purple.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 6),
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-                child: Row(
+                labelColor: Colors.black87,
+                unselectedLabelColor: Colors.black54,
+                labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+                tabs: modes.map((mode) {
+                  return Tab(
+                    child: FittedBox( // ✅ xử lý tự co lại nếu tràn
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            _getLevelIcon(mode == 'all' ? 'easy' : mode),
+                            size: 16,
+                            color: selectedMode == mode ? _getLevelColor(mode) : Colors.black54,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            mode == 'all' ? 'Tất cả' : _getLevelName(mode),
+                            overflow: TextOverflow.ellipsis, // ✅ tránh bị tràn chữ
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+
+          // Nội dung
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: isLoading
+                  ? const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text(
+                      'Đang tải lịch sử...',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+                  : errorMessage.isNotEmpty
+                  ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.history,
-                      color: Colors.purple.shade600,
-                      size: 28,
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.red.shade300,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Tổng số bài đã làm',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.black54,
-                            ),
+                    const SizedBox(height: 16),
+                    Text(
+                      errorMessage,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.red.shade600,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _loadQuizHistory,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.purple.shade600,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Thử lại'),
+                    ),
+                  ],
+                ),
+              )
+                  : _filteredQuizHistory.isEmpty // Use filtered history here
+                  ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.history_outlined,
+                      size: 64,
+                      color: Colors.grey.shade400,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Bạn chưa làm bài quiz nào',
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Hãy bắt đầu làm bài quiz đầu tiên của bạn!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.purple.shade600,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Về trang chủ'),
+                    ),
+                  ],
+                ),
+              )
+                  : RefreshIndicator(
+                onRefresh: _loadQuizHistory,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header thống kê (hiển thị tổng số bài đã làm trong _filteredQuizHistory)
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.purple.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 6),
                           ),
-                          Text(
-                            '${quizHistory.length} bài quiz',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.purple.shade600,
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.history,
+                            color: Colors.purple.shade600,
+                            size: 28,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Tổng số bài đã làm',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                                Text(
+                                  '${_filteredQuizHistory.length} bài quiz', // Use filtered history count
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.purple.shade600,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
                     ),
+
+                    const SizedBox(height: 20),
+
+                    // Danh sách lịch sử
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: _filteredQuizHistory.length,
+                        itemBuilder: (context, index) {
+                          final quiz = _filteredQuizHistory[index];
+                          // Hiển thị mới nhất trước
+                          final reversedIndex = _filteredQuizHistory.length - 1 - index;
+                          final reversedQuiz = _filteredQuizHistory[reversedIndex];
+                          return _buildQuizHistoryCard(reversedQuiz, reversedIndex);
+                        },
+                      ),
+                    ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 20),
-
-              // Danh sách lịch sử
-              Expanded(
-                child: ListView.builder(
-                  itemCount: quizHistory.length,
-                  itemBuilder: (context, index) {
-                    final quiz = quizHistory[index];
-                    return _buildQuizHistoryCard(quiz, index);
-                  },
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

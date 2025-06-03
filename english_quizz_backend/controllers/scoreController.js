@@ -1,5 +1,5 @@
 const Score = require("../models/score");
-const User = require("../models/user"); // phải import User
+const User = require("../models/User"); // phải import User
 
 // ✅ Ghi điểm có gắn user_id từ email
 exports.saveScore = async (req, res) => {
@@ -10,11 +10,29 @@ exports.saveScore = async (req, res) => {
       return res.status(400).json({ message: "Thiếu dữ liệu bắt buộc" });
     }
 
+    // Cập nhật hoặc tạo mới bản ghi Score
     const updatedScore = await Score.findOneAndUpdate(
-      { user_id: userId, mode }, // đúng field
+      { user_id: userId, mode },
       { score, duration, date: new Date() },
       { upsert: true, new: true }
     );
+
+    // Cập nhật maxScore và bestDuration trong User model
+    // Đây là phần quan trọng để đảm bảo dữ liệu hiển thị trên bảng xếp hạng được cập nhật
+    const user = await User.findById(userId);
+    if (user) {
+      // Cập nhật maxScore
+      if (user.maxScore === undefined || user.maxScore === null || score > user.maxScore) {
+        user.maxScore = score;
+      }
+      // Cập nhật bestDuration (thời gian thấp nhất là tốt nhất)
+      // Đảm bảo duration không phải là null trước khi so sánh
+      if (duration != null && (user.bestDuration === undefined || user.bestDuration === null || duration < user.bestDuration)) {
+        user.bestDuration = duration;
+      }
+      await user.save();
+    }
+
 
     res
       .status(201)
@@ -59,7 +77,17 @@ exports.getRankingByMode = async (req, res) => {
           username: { $first: "$userInfo.username" },
           email: { $first: "$userInfo.email" },
           maxScore: { $max: "$score" },
-          bestDuration: { $min: "$duration" }, // thời gian ngắn nhất trong các lần đạt điểm cao
+          bestDuration: { $min: "$duration" }, // Đảm bảo tên trường là "bestDuration"
+        },
+      },
+      {
+        // Thêm $project stage để đảm bảo các trường là số và xử lý null
+        $project: {
+          _id: 1,
+          username: 1,
+          email: 1,
+          maxScore: { $ifNull: ["$maxScore", 0] },
+          bestDuration: { $ifNull: ["$bestDuration", 0] }, // Đảm bảo tên trường là "bestDuration"
         },
       },
       {
